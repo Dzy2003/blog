@@ -1,0 +1,23 @@
+server:
+  port: 8888
+spring:
+  application : blog
+  jackson:
+    default-property-inclusion: non_null
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/blog?useSSL=false&serverTimezone=UTC
+    username: root
+    password: asdqwe123
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    db-config:
+      tablePrefix: tb_
+      id-type: auto
+
+logging:
+  level:
+    com.hmdp: debug
