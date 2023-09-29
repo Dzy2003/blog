@@ -20,4 +20,22 @@ class ArticleServiceImplTest {
         Result result = articleService.listArticles(new PageInfo(1, 3));
         log.info(result.toString());
     }
+
+    @Test
+    void getHotArticles() {
+        Result hotArticles = articleService.getHotArticles();
+        log.info(hotArticles.toString());
+    }
+
+    @Test
+    void getNewArticles() {
+        Result newArticles = articleService.getNewArticles();
+        log.info(newArticles.toString());
+    }
+
+    @Test
+    void getArchives() {
+        Result archives = articleService.getArchives();
+        log.info(archives.toString());
+    }
 }

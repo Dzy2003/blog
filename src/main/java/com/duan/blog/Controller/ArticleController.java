@@ -22,4 +22,20 @@ public class ArticleController {
     public Result listArticles(@RequestBody PageInfo pageInfo){
         return articleService.listArticles(pageInfo);
     }
+
+    @PostMapping("/hot")
+    public Result listHotArticles(){
+        return articleService.getHotArticles();
+    }
+
+    @PostMapping("/new")
+    public Result listNewArticles(){
+        return articleService.getNewArticles();
+    }
+
+    @PostMapping("/listArchives")
+    public Result listArchives(){
+        return articleService.getArchives();
+    }
+
 }

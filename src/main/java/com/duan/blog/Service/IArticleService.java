@@ -6,5 +6,12 @@ import com.duan.blog.dto.Result;
 import com.duan.blog.entity.Article;
 
 public interface IArticleService extends IService<Article> {
+
     Result listArticles(PageInfo pageInfo);
+
+    Result getHotArticles();
+
+    Result getNewArticles();
+
+    Result getArchives();
 }
