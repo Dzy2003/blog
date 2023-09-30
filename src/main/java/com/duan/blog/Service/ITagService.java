@@ -7,6 +7,7 @@ import com.duan.blog.entity.Tag;
 import java.util.List;
 
 public interface ITagService extends IService<Tag> {
+
     List<Tag> getTagByArticleId(Long articleId);
 
     Result getHotTags();
