@@ -3,7 +3,7 @@ package com.duan.blog.dto;
 import lombok.Data;
 
 @Data
-public class UserDto {
+public class UserDTO {
     Long id;
 
     String account;

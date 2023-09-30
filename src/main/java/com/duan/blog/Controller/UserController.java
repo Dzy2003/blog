@@ -2,6 +2,7 @@ package com.duan.blog.Controller;
 
 import com.duan.blog.Service.ISysUserService;
 import com.duan.blog.dto.LoginInfo;
+import com.duan.blog.dto.RegisterInfo;
 import com.duan.blog.dto.Result;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
@@ -26,4 +27,10 @@ public class UserController {
     public Result logout(@RequestHeader("Authorization") String token){
         return userService.logout(token);
     }
+
+    @PostMapping("/register")
+    public Result register(@RequestBody RegisterInfo registerInfo){
+        return userService.register(registerInfo);
+    }
+
 }

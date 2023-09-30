@@ -16,7 +16,7 @@ mybatis-plus:
   global-config:
     db-config:
       tablePrefix: tb_
-      id-type: auto
+      id-type: 0
 
 logging:
   level:
