@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ArticleListVo {
+public class ArticleVo {
     private Long id;
 
     private String title;
@@ -27,6 +27,9 @@ public class ArticleListVo {
 
     private List<Tag> tags;
 
-    //private List<CategoryVo> categorys;
+    private CategoryVo category;
+
+    private ArticleBodyVo body;
+
 
 }

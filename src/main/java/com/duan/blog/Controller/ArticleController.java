@@ -4,10 +4,7 @@ import com.duan.blog.Service.IArticleService;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/articles")
@@ -36,6 +33,11 @@ public class ArticleController {
     @PostMapping("/listArchives")
     public Result listArchives(){
         return articleService.getArchives();
+    }
+
+    @PostMapping("/view/{id}")
+    public Result detailArticle(@PathVariable("id") Long id){
+        return articleService.detailArticle(id);
     }
 
 }

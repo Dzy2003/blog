@@ -38,4 +38,10 @@ class ArticleServiceImplTest {
         Result archives = articleService.getArchives();
         log.info(archives.toString());
     }
+
+    @Test
+    void detailArticle() {
+        Result result = articleService.detailArticle(1l);
+        System.out.println(result);
+    }
 }

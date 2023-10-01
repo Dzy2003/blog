@@ -14,4 +14,6 @@ public interface IArticleService extends IService<Article> {
     Result getNewArticles();
 
     Result getArchives();
+
+    Result detailArticle(Long id);
 }
