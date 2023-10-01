@@ -41,6 +41,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     IArticleBodyService articleBodyService;
     @Resource
     ICategoryService categoryService;
+    @Resource
+    ThreadService threadService;
 
     @Override
     public Result listArticles(PageInfo pageInfo) {
@@ -76,6 +78,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         Article article = lambdaQuery().eq(Article::getId, id).one();
 
         if(article == null) return Result.fail(ARTICLE_NOT_EXIST.getCode(),ARTICLE_NOT_EXIST.getMsg());
+
+        threadService.updateViewCount(this, article);//线程池异步刷新阅读数
 
         ArticleVo articleVo = ArticleToArticleVo(article, true);
 
