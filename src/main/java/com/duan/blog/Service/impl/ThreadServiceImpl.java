@@ -2,9 +2,8 @@ package com.duan.blog.Service.impl;
 
 import com.duan.blog.Service.IArticleService;
 import com.duan.blog.Service.ThreadService;
-import com.duan.blog.entity.Article;
+import com.duan.blog.pojo.Article;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.annotation.Aspect;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 

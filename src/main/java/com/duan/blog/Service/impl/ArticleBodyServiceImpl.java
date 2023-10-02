@@ -3,7 +3,7 @@ package com.duan.blog.Service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.ArticleBodyMapper;
 import com.duan.blog.Service.IArticleBodyService;
-import com.duan.blog.entity.ArticleBody;
+import com.duan.blog.pojo.ArticleBody;
 import org.springframework.stereotype.Service;
 
 /**

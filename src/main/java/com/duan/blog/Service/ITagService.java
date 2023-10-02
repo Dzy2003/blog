@@ -2,7 +2,7 @@ package com.duan.blog.Service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.duan.blog.dto.Result;
-import com.duan.blog.entity.Tag;
+import com.duan.blog.pojo.Tag;
 
 import java.util.List;
 

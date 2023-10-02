@@ -5,14 +5,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.TagMapper;
 import com.duan.blog.Service.ITagService;
 import com.duan.blog.dto.Result;
-import com.duan.blog.entity.Tag;
-import io.micrometer.common.util.StringUtils;
+import com.duan.blog.pojo.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.duan.blog.utils.SystemConstants.HOT_TAG_LIMIT;
 

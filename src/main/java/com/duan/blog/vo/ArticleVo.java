@@ -1,6 +1,6 @@
 package com.duan.blog.vo;
 
-import com.duan.blog.entity.Tag;
+import com.duan.blog.pojo.Tag;
 import lombok.Data;
 
 import java.util.List;

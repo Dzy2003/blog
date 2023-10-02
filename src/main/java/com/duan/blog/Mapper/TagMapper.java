@@ -1,7 +1,7 @@
 package com.duan.blog.Mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.duan.blog.entity.Tag;
+import com.duan.blog.pojo.Tag;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;

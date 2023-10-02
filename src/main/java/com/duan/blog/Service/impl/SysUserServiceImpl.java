@@ -9,7 +9,7 @@ import com.duan.blog.dto.LoginInfo;
 import com.duan.blog.dto.RegisterInfo;
 import com.duan.blog.dto.Result;
 import com.duan.blog.dto.UserDTO;
-import com.duan.blog.entity.SysUser;
+import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.JWTUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;

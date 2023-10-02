@@ -1,6 +1,6 @@
 package com.duan.blog.Service;
 
-import com.duan.blog.entity.Article;
+import com.duan.blog.pojo.Article;
 
 public interface ThreadService {
 

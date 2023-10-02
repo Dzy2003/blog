@@ -1,6 +1,5 @@
-package com.duan.blog.entity;
+package com.duan.blog.pojo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
