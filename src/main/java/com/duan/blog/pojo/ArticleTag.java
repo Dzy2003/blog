@@ -7,17 +7,16 @@ import lombok.Data;
 
 /**
  * @author 白日
- * @date Created in 2023/10/1 10:10
+ * @date Created in 2023/10/3 14:16
  */
 @Data
-@TableName("tb_article_body")
-public class ArticleBody {
+@TableName("tb_article_tag")
+public class ArticleTag {
     @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    Long id;
 
-    private String content;
+    Long articleId;
 
-    private String contentHtml;
+    Long tagId;
 
-    private Long articleId;
 }

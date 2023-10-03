@@ -16,4 +16,11 @@ public class TagController {
     public Result listHotTags(){
         return tagService.getHotTags();
     }
+
+    @GetMapping()
+    public Result listAllTags(){
+        return tagService.getAllTags();
+    }
+
+
 }

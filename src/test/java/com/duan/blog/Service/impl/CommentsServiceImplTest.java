@@ -14,4 +14,9 @@ class CommentsServiceImplTest {
     public void getCommentsByArticleId() throws Exception {
         System.out.println(commentsService.getCommentsByArticleId(1l));
     }
+
+    @Test
+    void insertComment() {
+
+    }
 }

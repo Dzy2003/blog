@@ -37,4 +37,9 @@ public class TagServiceImpl extends ServiceImpl<TagMapper, Tag> implements ITagS
         return Result.success(list);
 
     }
+
+    @Override
+    public Result getAllTags() {
+        return Result.success(lambdaQuery().select(Tag::getId,Tag::getTagName).list());
+    }
 }

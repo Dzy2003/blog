@@ -1,13 +1,11 @@
 package com.duan.blog.Controller;
 
 import com.duan.blog.Service.ICommentsService;
+import com.duan.blog.dto.CommentInfo;
 import com.duan.blog.dto.Result;
 import jakarta.annotation.Resource;
 import org.springframework.http.server.RequestPath;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author 白日
@@ -22,5 +20,10 @@ public class CommentsController {
     @GetMapping("/article/{id}")
     public Result listComments(@PathVariable("id") Long id){
         return commentsService.getCommentsByArticleId(id);
+    }
+
+    @PostMapping("/create/change")
+    public Result comment(@RequestBody CommentInfo commentInfo){
+        return commentsService.insertComment(commentInfo);
     }
 }

@@ -16,4 +16,9 @@ class TagServiceImplTest {
         Result hotTags = tagService.getHotTags();
         System.out.println(hotTags);
     }
+
+    @Test
+    void getAllTags() {
+        System.out.println(tagService.getAllTags());
+    }
 }

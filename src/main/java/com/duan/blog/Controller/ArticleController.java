@@ -1,6 +1,7 @@
 package com.duan.blog.Controller;
 
 import com.duan.blog.Service.IArticleService;
+import com.duan.blog.dto.ArticleInfo;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,10 @@ public class ArticleController {
     @PostMapping("/view/{id}")
     public Result detailArticle(@PathVariable("id") Long id){
         return articleService.detailArticle(id);
+    }
+    @PostMapping("/publish")
+    public Result publishArticle(@RequestBody ArticleInfo articleInfo){
+        return articleService.insertArticle(articleInfo);
     }
 
 }

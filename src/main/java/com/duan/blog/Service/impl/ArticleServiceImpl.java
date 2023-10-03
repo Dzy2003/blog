@@ -6,12 +6,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.ArticleMapper;
 import com.duan.blog.Service.*;
+import com.duan.blog.dto.ArticleInfo;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
-import com.duan.blog.pojo.Article;
-import com.duan.blog.pojo.ArticleBody;
-import com.duan.blog.pojo.Category;
-import com.duan.blog.pojo.SysUser;
+import com.duan.blog.pojo.*;
+import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.ArticleBodyVo;
 import com.duan.blog.vo.ArticleHotAndNewVo;
 import com.duan.blog.vo.ArticleVo;
@@ -21,8 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import static com.duan.blog.utils.ErrorCode.ARTICLE_NOT_EXIST;
@@ -43,6 +44,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     ICategoryService categoryService;
     @Resource
     ThreadService threadService;
+    @Resource
+    IArticleTagService articleTagService;
 
     @Override
     public Result listArticles(PageInfo pageInfo) {
@@ -84,6 +87,47 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         ArticleVo articleVo = ArticleToArticleVo(article, true);
 
         return Result.success(articleVo);
+    }
+
+    @Override
+    public Result insertArticle(ArticleInfo articleInfo) {
+
+        Article article = savaArticle(articleInfo);
+        insertArticleTag(articleInfo,article);
+        insertArticleBody(articleInfo,article.getId());
+
+        return Result.success(articleInfo.getId());
+    }
+
+    private Article savaArticle(ArticleInfo articleInfo) {
+        Article article = BeanUtil.copyProperties(articleInfo, Article.class);
+        article.setCommentCounts(0);
+        article.setViewCounts(0);
+        article.setAuthorId(UserHolder.getUser().getId());
+        article.setBodyId(-1l);
+        article.setCategoryId(articleInfo.getCategory().getId());
+        article.setCreateDate(System.currentTimeMillis());
+        save(article);
+        return article;
+    }
+
+    private void insertArticleBody(ArticleInfo articleInfo,Long articleId) {
+        ArticleBody articleBody = BeanUtil.copyProperties(articleInfo.getBody(), ArticleBody.class);
+        articleBody.setArticleId(articleId);
+        articleBodyService.save(articleBody);
+        lambdaUpdate()
+                .set(Article::getBodyId, articleBody.getId())
+                .eq(Article::getId,articleId)
+                .update();
+    }
+
+    private void insertArticleTag(ArticleInfo articleInfo,Article article) {
+        articleTagService.saveBatch(articleInfo.getTags().stream().map(tag -> {
+            ArticleTag articleTag = new ArticleTag();
+            articleTag.setTagId(tag.getId());
+            articleTag.setArticleId(article.getId());
+            return articleTag;
+        }).collect(Collectors.toList()));
     }
 
     /**

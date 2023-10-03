@@ -1,5 +1,7 @@
 package com.duan.blog.pojo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -8,7 +10,7 @@ import static com.duan.blog.utils.SystemConstants.ARTICLE_COMMON;
 @Data
 @TableName("tb_article")
 public class Article {
-
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     private String title;

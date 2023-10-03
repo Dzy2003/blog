@@ -3,16 +3,24 @@ package com.duan.blog.Service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.CommentsMapper;
+import com.duan.blog.Service.IArticleService;
 import com.duan.blog.Service.ICommentsService;
 import com.duan.blog.Service.ISysUserService;
+import com.duan.blog.dto.CommentInfo;
 import com.duan.blog.dto.Result;
 import com.duan.blog.dto.UserDTO;
+import com.duan.blog.pojo.Article;
 import com.duan.blog.pojo.Comment;
 import com.duan.blog.pojo.SysUser;
+import com.duan.blog.utils.UserHolder;
+import com.duan.blog.vo.ArticleVo;
 import com.duan.blog.vo.CommentVo;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +32,8 @@ import java.util.stream.Collectors;
 public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> implements ICommentsService {
     @Resource
     ISysUserService userService;
+    @Resource
+    IArticleService articleService;
 
     @Override
     public Result getCommentsByArticleId(Long id) {
@@ -44,6 +54,39 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
 
         return Result.success(commentVos);
 
+    }
+
+    @Override
+    @Transactional
+    public Result insertComment(CommentInfo commentInfo) {
+        Comment comment = new Comment();
+
+        enrichComment(commentInfo, comment);
+        updateArticleCommentCount(comment);
+        save(comment);
+
+        return Result.success(null);
+    }
+
+    private void updateArticleCommentCount(Comment comment) {
+        articleService.lambdaUpdate()
+                .setSql("comment_counts = comment_counts+1")
+                .eq(Article::getId, comment.getArticleId()).update();
+    }
+
+    /**
+     * 封装Comment的属性
+     * @param commentInfo
+     * @param comment
+     */
+    private void enrichComment(CommentInfo commentInfo, Comment comment) {
+        comment.setAuthorId(UserHolder.getUser().getId());
+        comment.setCreateDate(System.currentTimeMillis());
+        comment.setToUid(commentInfo.getToUserId());
+        comment.setContent(commentInfo.getContent());
+        comment.setArticleId(commentInfo.getArticleId());
+        comment.setParentId(commentInfo.getParent());
+        comment.setLevel(commentInfo.getParent() == 0 ? 1 : 2);
     }
 
     /**
@@ -69,6 +112,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
 
         setCommentVoAuthor(commentVo, comment.getAuthorId());
         setCommentVoToUser(commentVo, comment.getToUid());
+        formatCommentVoCreateDate(commentVo,comment.getCreateDate());
 
         return commentVo;
     }
@@ -86,7 +130,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
     }
 
     /**
-     * 设置CommentVo的ToUser属性
+     * 设置CommentVo的Author属性
      * @param commentVo
      * @param authorId
      */
@@ -95,5 +139,15 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
                 .select(SysUser::getId, SysUser::getAvatar, SysUser::getNickname)
                 .eq(SysUser::getId, authorId)
                 .one(), UserDTO.class));
+    }
+
+    /**
+     * 将article中CreateDate的时间戳转换为时间并添加到ArticleVo
+     * @param commentVo
+     */
+    private void formatCommentVoCreateDate(CommentVo commentVo,Long Timestamp) {
+        String CreateTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                .format(new Date(Timestamp));
+        commentVo.setCreateDate(CreateTime);
     }
 }

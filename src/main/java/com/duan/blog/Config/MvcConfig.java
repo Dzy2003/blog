@@ -1,7 +1,6 @@
 package com.duan.blog.Config;
 
 import com.duan.blog.Interceptor.LoginInterceptor;
-import com.duan.blog.Interceptor.RefreshTokenInterceptor;
 import com.duan.blog.Service.ISysUserService;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Configuration;
@@ -21,14 +20,11 @@ public class MvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 登录拦截器
-        registry.addInterceptor(new LoginInterceptor())
+        registry.addInterceptor(new LoginInterceptor(userService))
                 .addPathPatterns(
-                        "/test"
-                        //设置拦截器优先级
-                ).order(1);
-        registry.addInterceptor(new RefreshTokenInterceptor(userService))
-                .addPathPatterns("/**").order(0);
+                        "/test",
+                        "/comments/create/change",
+                        "/articles/publish"
+                );
     }
-
-
 }

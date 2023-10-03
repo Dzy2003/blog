@@ -11,4 +11,6 @@ public interface ITagService extends IService<Tag> {
     List<Tag> getTagByArticleId(Long articleId);
 
     Result getHotTags();
+
+    Result getAllTags();
 }
