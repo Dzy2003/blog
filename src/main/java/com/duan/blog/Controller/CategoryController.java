@@ -6,10 +6,7 @@ import com.duan.blog.dto.Result;
 import com.duan.blog.pojo.Category;
 import com.duan.blog.vo.CategoryVo;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author 白日
@@ -24,7 +21,16 @@ public class CategoryController {
     @GetMapping
     public Result listCategories(){
         return categoryService.getAllCategories();
+    }
 
+    @GetMapping("/detail")
+    public Result listCategoriesDetail(){
+        return categoryService.getCategoriesDetail();
+    }
+
+    @GetMapping("/detail/{id}")
+    public Result CategoryDetail(@PathVariable Long id){
+        return categoryService.getCategoriesDetailById(id);
     }
 
 }

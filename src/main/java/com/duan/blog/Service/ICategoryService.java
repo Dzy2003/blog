@@ -7,4 +7,8 @@ import com.duan.blog.pojo.Category;
 public interface ICategoryService extends IService<Category> {
 
     Result getAllCategories();
+
+    Result getCategoriesDetail();
+
+    Result getCategoriesDetailById(Long id);
 }

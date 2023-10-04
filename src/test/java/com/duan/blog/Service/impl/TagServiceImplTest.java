@@ -21,4 +21,17 @@ class TagServiceImplTest {
     void getAllTags() {
         System.out.println(tagService.getAllTags());
     }
+
+    @Test
+    void getTagByArticleId() {
+    }
+
+    @Test
+    void getHotTags() {
+    }
+
+    @Test
+    void getTagsDetail() {
+        System.out.println(tagService.getTagsDetail());
+    }
 }

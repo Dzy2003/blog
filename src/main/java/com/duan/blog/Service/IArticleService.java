@@ -16,7 +16,7 @@ public interface IArticleService extends IService<Article> {
 
     Result getArchives();
 
-    Result detailArticle(Long id);
+    Result detailArticle(Long id,Boolean isEdit);
 
     Result insertArticle(ArticleInfo articleInfo);
 }

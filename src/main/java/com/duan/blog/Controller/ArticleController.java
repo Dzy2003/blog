@@ -38,11 +38,16 @@ public class ArticleController {
 
     @PostMapping("/view/{id}")
     public Result detailArticle(@PathVariable("id") Long id){
-        return articleService.detailArticle(id);
+        return articleService.detailArticle(id,false);
     }
+
     @PostMapping("/publish")
     public Result publishArticle(@RequestBody ArticleInfo articleInfo){
         return articleService.insertArticle(articleInfo);
+    }
+    @PostMapping("/{id}")
+    public Result EditArticle(@PathVariable("id") Long id){
+        return articleService.detailArticle(id,true);
     }
 
 }

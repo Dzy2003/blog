@@ -17,7 +17,12 @@ class ArticleServiceImplTest {
     IArticleService articleService;
     @Test
     public void testListArticle(){
-        Result result = articleService.listArticles(new PageInfo(1, 3));
+        PageInfo pageInfo = new PageInfo();
+        pageInfo.setPage(1);
+        pageInfo.setPageSize(4);
+        pageInfo.setCategoryId(2l);
+        pageInfo.setTagId(7l);
+        Result result = articleService.listArticles(pageInfo);
         log.info(result.toString());
     }
 
@@ -41,7 +46,7 @@ class ArticleServiceImplTest {
 
     @Test
     void detailArticle() {
-        Result result = articleService.detailArticle(1l);
+        Result result = articleService.detailArticle(1l,false);
         System.out.println(result);
     }
 }

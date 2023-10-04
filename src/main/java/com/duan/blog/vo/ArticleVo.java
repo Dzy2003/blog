@@ -1,5 +1,6 @@
 package com.duan.blog.vo;
 
+import com.duan.blog.dto.UserDTO;
 import com.duan.blog.pojo.Tag;
 import lombok.Data;
 
@@ -23,7 +24,7 @@ public class ArticleVo {
      */
     private String createDate;
 
-    private String author;
+    private UserDTO author;
 
     private List<Tag> tags;
 

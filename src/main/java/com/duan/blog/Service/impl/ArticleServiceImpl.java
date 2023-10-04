@@ -1,6 +1,7 @@
 package com.duan.blog.Service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,6 +10,7 @@ import com.duan.blog.Service.*;
 import com.duan.blog.dto.ArticleInfo;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
+import com.duan.blog.dto.UserDTO;
 import com.duan.blog.pojo.*;
 import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.ArticleBodyVo;
@@ -17,7 +19,9 @@ import com.duan.blog.vo.ArticleVo;
 import com.duan.blog.vo.CategoryVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,10 +54,21 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public Result listArticles(PageInfo pageInfo) {
         if(pageInfo == null) return Result.fail(1,"No page info");
-        List<Article> records = lambdaQuery().orderByDesc(Article::getWeight)
-                .orderByDesc(Article::getCreateDate)
-                .page(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()))
-                .getRecords();
+        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(Article::getWeight)
+                .orderByDesc(Article::getCreateDate);
+        if(pageInfo.getCategoryId() != null) queryWrapper.eq(Article::getCategoryId,pageInfo.getCategoryId());
+        if(pageInfo.getTagId() != null) {
+            queryWrapper.in(Article::getId,articleTagService.lambdaQuery()
+                    .select(ArticleTag::getArticleId)
+                    .eq(ArticleTag::getTagId,pageInfo.getTagId())
+                    .list()
+                    .stream().map(ArticleTag::getArticleId)
+                    .collect(Collectors.toList()));
+        }
+        List<Article> records = articleMapper.selectPage(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
+                queryWrapper.orderByDesc(Article::getWeight)
+                        .orderByDesc(Article::getCreateDate)).getRecords();
         //log.info("数据库查询数据：" + records.toString());
         return Result.success(ArticleListToArticleVoList(records));
 
@@ -77,12 +92,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public Result detailArticle(Long id) {
+    public Result detailArticle(Long id,Boolean isEdit) {
         Article article = lambdaQuery().eq(Article::getId, id).one();
 
         if(article == null) return Result.fail(ARTICLE_NOT_EXIST.getCode(),ARTICLE_NOT_EXIST.getMsg());
 
-        threadService.updateViewCount(this, article);//线程池异步刷新阅读数
+        if(isEdit) threadService.updateViewCount(this, article);//线程池异步刷新阅读数
 
         ArticleVo articleVo = ArticleToArticleVo(article, true);
 
@@ -90,16 +105,40 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    @Transactional
     public Result insertArticle(ArticleInfo articleInfo) {
 
-        Article article = savaArticle(articleInfo);
-        insertArticleTag(articleInfo,article);
-        insertArticleBody(articleInfo,article.getId());
-
-        return Result.success(articleInfo.getId());
+        if(articleInfo.getId() == null){
+            return Result.success(savaArticle(articleInfo));
+        }
+        return Result.success(updateArticle(articleInfo));
     }
 
-    private Article savaArticle(ArticleInfo articleInfo) {
+    /**
+     * 更新文章
+     * @param articleInfo
+     * @return
+     */
+    private Long updateArticle(ArticleInfo articleInfo) {
+        Article article = BeanUtil.copyProperties(articleInfo, Article.class);
+        article.setCategoryId(articleInfo.getCategory().getId());
+        updateById(article);
+
+        ArticleBody articleBody = BeanUtil.copyProperties(articleInfo.getBody(), ArticleBody.class);
+        articleBodyService.lambdaUpdate()
+                .eq(ArticleBody::getArticleId,article.getId()).update(articleBody);
+        //一条文章涉及多个标签，修改时先将原本标签记录删除后再进行增加
+        articleTagService.lambdaUpdate().eq(ArticleTag::getArticleId, articleInfo.getId()).remove();
+        this.insertArticleTag(articleInfo,article);
+        return article.getId();
+    }
+
+    /**
+     * 插入文章
+     * @param articleInfo
+     * @return
+     */
+    private Long savaArticle(ArticleInfo articleInfo) {
         Article article = BeanUtil.copyProperties(articleInfo, Article.class);
         article.setCommentCounts(0);
         article.setViewCounts(0);
@@ -107,10 +146,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setBodyId(-1l);
         article.setCategoryId(articleInfo.getCategory().getId());
         article.setCreateDate(System.currentTimeMillis());
+
         save(article);
-        return article;
+        insertArticleBody(articleInfo,article.getId());
+        insertArticleTag(articleInfo,article);
+
+        return article.getId();
     }
 
+    /**
+     * 插入文章体
+     * @param articleInfo
+     * @param articleId
+     */
     private void insertArticleBody(ArticleInfo articleInfo,Long articleId) {
         ArticleBody articleBody = BeanUtil.copyProperties(articleInfo.getBody(), ArticleBody.class);
         articleBody.setArticleId(articleId);
@@ -121,6 +169,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .update();
     }
 
+    /**
+     * 插入文章标签
+     * @param articleInfo
+     * @param article
+     */
     private void insertArticleTag(ArticleInfo articleInfo,Article article) {
         articleTagService.saveBatch(articleInfo.getTags().stream().map(tag -> {
             ArticleTag articleTag = new ArticleTag();
@@ -226,10 +279,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @param articleVo
      */
     private void setArticleVoAuthor(Article article, ArticleVo articleVo) {
-        articleVo.setAuthor(userService.lambdaQuery()
-                .select(SysUser::getAccount)
+        articleVo.setAuthor(BeanUtil.copyProperties(userService.lambdaQuery()
+                .select(SysUser::getNickname,SysUser::getId,SysUser::getAvatar)
                 .eq(SysUser::getId,article.getAuthorId())
-                .one().getAccount());
+                .one(), UserDTO.class));
     }
 
     /**

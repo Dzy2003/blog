@@ -14,4 +14,9 @@ class CategoryServiceImplTest {
     public void getAllCategories(){
         System.out.println(categoryService.getAllCategories());
     }
+
+    @Test
+    void getCategoriesDetail() {
+        System.out.println(categoryService.getCategoriesDetail());
+    }
 }

@@ -11,4 +11,8 @@ public class PageInfo {
     Integer page;
 
     Integer pageSize;
+
+    private Long categoryId;
+
+    private Long tagId;
 }

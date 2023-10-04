@@ -68,6 +68,10 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         return Result.success(null);
     }
 
+    /**
+     * 评论后将文章的评论数增加
+     * @param comment
+     */
     private void updateArticleCommentCount(Comment comment) {
         articleService.lambdaUpdate()
                 .setSql("comment_counts = comment_counts+1")
