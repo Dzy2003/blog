@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.ArticleMapper;
 import com.duan.blog.Service.*;
+import com.duan.blog.aop.annotation.LogAnnotation;
 import com.duan.blog.dto.ArticleInfo;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
@@ -52,25 +53,30 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     IArticleTagService articleTagService;
 
     @Override
+    @LogAnnotation(module = "Article", operator = "查询文章列表")
     public Result listArticles(PageInfo pageInfo) {
-        if(pageInfo == null) return Result.fail(1,"No page info");
-        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByDesc(Article::getWeight)
-                .orderByDesc(Article::getCreateDate);
-        if(pageInfo.getCategoryId() != null) queryWrapper.eq(Article::getCategoryId,pageInfo.getCategoryId());
-        if(pageInfo.getTagId() != null) {
-            queryWrapper.in(Article::getId,articleTagService.lambdaQuery()
-                    .select(ArticleTag::getArticleId)
-                    .eq(ArticleTag::getTagId,pageInfo.getTagId())
-                    .list()
-                    .stream().map(ArticleTag::getArticleId)
-                    .collect(Collectors.toList()));
-        }
-        List<Article> records = articleMapper.selectPage(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
-                queryWrapper.orderByDesc(Article::getWeight)
-                        .orderByDesc(Article::getCreateDate)).getRecords();
+//        if(pageInfo == null) return Result.fail(1,"No page info");
+//        LambdaQueryWrapper<Article> queryWrapper = new LambdaQueryWrapper<>();
+//        queryWrapper.orderByDesc(Article::getWeight)
+//                .orderByDesc(Article::getCreateDate);
+//        if(pageInfo.getCategoryId() != null) queryWrapper.eq(Article::getCategoryId,pageInfo.getCategoryId());
+//        if(pageInfo.getTagId() != null) {
+//            queryWrapper.in(Article::getId,articleTagService.lambdaQuery()
+//                    .select(ArticleTag::getArticleId)
+//                    .eq(ArticleTag::getTagId,pageInfo.getTagId())
+//                    .list()
+//                    .stream().map(ArticleTag::getArticleId)
+//                    .collect(Collectors.toList()));
+//        }
+//        List<Article> records = articleMapper.selectPage(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
+//                queryWrapper.orderByDesc(Article::getWeight)
+//                        .orderByDesc(Article::getCreateDate)).getRecords();
         //log.info("数据库查询数据：" + records.toString());
-        return Result.success(ArticleListToArticleVoList(records));
+
+        return Result.success(ArticleListToArticleVoList(
+                articleMapper.listArticle(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
+                        pageInfo.getCategoryId(),pageInfo.getTagId(),
+                        pageInfo.getYear(),pageInfo.getMonth()).getRecords()));
 
     }
 

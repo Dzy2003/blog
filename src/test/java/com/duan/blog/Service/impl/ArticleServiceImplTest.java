@@ -22,8 +22,7 @@ class ArticleServiceImplTest {
         pageInfo.setPageSize(4);
         pageInfo.setCategoryId(2l);
         pageInfo.setTagId(7l);
-        Result result = articleService.listArticles(pageInfo);
-        log.info(result.toString());
+        articleService.listArticles(pageInfo);
     }
 
     @Test
