@@ -17,7 +17,7 @@ class BlogApplicationTests {
     TagMapper mapper;
     @Test
     public void testRunnable() throws Exception {
-        String s = "DADWDAWDAWDAD";
+        String s = "bd8f3a7fdeda9bf81d6f60c88338a14f";
         test(s, (a) -> a.toLowerCase());
     }
     public <T,R> void test(T r,Function<T,R> function){

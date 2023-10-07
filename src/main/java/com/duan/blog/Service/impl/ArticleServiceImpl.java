@@ -7,12 +7,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.ArticleMapper;
 import com.duan.blog.Service.*;
+import com.duan.blog.aop.annotation.CacheAnnotation;
 import com.duan.blog.aop.annotation.LogAnnotation;
 import com.duan.blog.dto.ArticleInfo;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
 import com.duan.blog.dto.UserDTO;
 import com.duan.blog.pojo.*;
+import com.duan.blog.utils.RedisConstants;
 import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.ArticleBodyVo;
 import com.duan.blog.vo.ArticleHotAndNewVo;
@@ -53,6 +55,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     IArticleTagService articleTagService;
 
     @Override
+    @CacheAnnotation(KeyPrefix = RedisConstants.CACHE_Article_KEY)
     @LogAnnotation(module = "Article", operator = "查询文章列表")
     public Result listArticles(PageInfo pageInfo) {
 //        if(pageInfo == null) return Result.fail(1,"No page info");
@@ -93,6 +96,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    @CacheAnnotation(KeyPrefix = "cache:archive" ,cacheName = "archive")
     public Result getArchives() {
         return Result.success(articleMapper.getArticleArchivesByDate());
     }

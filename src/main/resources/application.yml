@@ -9,6 +9,18 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/blog?useSSL=false&serverTimezone=UTC
     username: root
     password: asdqwe123
+  data:
+    redis:
+      database: 1
+      host: 192.168.12.128
+      port: 6379
+      password: asdqwe123
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 1
+          time-between-eviction-runs: 10s
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
@@ -18,6 +30,7 @@ mybatis-plus:
     db-config:
       tablePrefix: tb_
       id-type: 0
+
 
 logging:
   level:
