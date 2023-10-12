@@ -14,12 +14,10 @@ import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
 import com.duan.blog.dto.UserDTO;
 import com.duan.blog.pojo.*;
+import com.duan.blog.utils.CacheClient;
 import com.duan.blog.utils.RedisConstants;
 import com.duan.blog.utils.UserHolder;
-import com.duan.blog.vo.ArticleBodyVo;
-import com.duan.blog.vo.ArticleHotAndNewVo;
-import com.duan.blog.vo.ArticleVo;
-import com.duan.blog.vo.CategoryVo;
+import com.duan.blog.vo.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.User;
@@ -31,6 +29,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.duan.blog.utils.ErrorCode.ARTICLE_NOT_EXIST;
@@ -53,6 +54,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     ThreadService threadService;
     @Resource
     IArticleTagService articleTagService;
+    @Resource
+    CacheClient cacheClient;
 
     @Override
     @CacheAnnotation(KeyPrefix = RedisConstants.CACHE_Article_KEY)
@@ -76,11 +79,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 //                        .orderByDesc(Article::getCreateDate)).getRecords();
         //log.info("数据库查询数据：" + records.toString());
 
-        return Result.success(ArticleListToArticleVoList(
-                articleMapper.listArticle(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
-                        pageInfo.getCategoryId(),pageInfo.getTagId(),
-                        pageInfo.getYear(),pageInfo.getMonth()).getRecords()));
+        return Result.success(ArticleListToArticleVoList(getArticles(pageInfo)));
+    }
 
+    /**
+     * 数据库中获取Article列表
+     * @param pageInfo
+     * @return
+     */
+    private List<Article> getArticles(PageInfo pageInfo) {
+        return articleMapper.listArticle(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
+                pageInfo.getCategoryId(), pageInfo.getTagId(),
+                pageInfo.getYear(), pageInfo.getMonth()).getRecords();
     }
 
     @Override
@@ -96,21 +106,30 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    @CacheAnnotation(KeyPrefix = "cache:archive" ,cacheName = "archive")
     public Result getArchives() {
         return Result.success(articleMapper.getArticleArchivesByDate());
     }
 
     @Override
     public Result detailArticle(Long id,Boolean isEdit) {
-        Article article = lambdaQuery().eq(Article::getId, id).one();
-
-        if(article == null) return Result.fail(ARTICLE_NOT_EXIST.getCode(),ARTICLE_NOT_EXIST.getMsg());
-
-        if(isEdit) threadService.updateViewCount(this, article);//线程池异步刷新阅读数
-
-        ArticleVo articleVo = ArticleToArticleVo(article, true);
-
+        //逻辑过期方案做缓存
+//        Article articleVo = cacheClient.queryWithLogicalExpire(
+//                RedisConstants.CACHE_Article_KEY + id,
+//                Article.class,
+//                () -> lambdaQuery().eq(Article::getId, id).one(),
+//                RedisConstants.CACHE_Article_TTL,
+//                TimeUnit.MINUTES
+//        );
+        //互斥锁方案做缓存
+        ArticleVo articleVo = cacheClient.queryWithLogicalExpire(
+                RedisConstants.CACHE_Article_KEY + id,
+                ArticleVo.class,
+                () -> ArticleToArticleVo(lambdaQuery().eq(Article::getId, id).one(),true),
+                RedisConstants.CACHE_Article_TTL,
+                TimeUnit.MINUTES
+        );
+        if(articleVo == null) return Result.fail(ARTICLE_NOT_EXIST.getCode(),ARTICLE_NOT_EXIST.getMsg());
+        //if(isEdit) threadService.updateViewCount(this, article);//线程池异步刷新阅读数
         return Result.success(articleVo);
     }
 

@@ -1,11 +1,10 @@
 package com.duan.blog.Service.impl;
 
-import cn.hutool.extra.ssh.JschUtil;
 import cn.hutool.json.JSONUtil;
 import com.duan.blog.Service.IArticleService;
 import com.duan.blog.Service.ThreadService;
 import com.duan.blog.pojo.Article;
-import com.duan.blog.utils.SimpleRedisLock;
+import com.duan.blog.utils.RedisData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -38,5 +37,11 @@ public class ThreadServiceImpl implements ThreadService {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public <R> void rebuildCache(R dbData,String cacheKey, StringRedisTemplate stringRedisTemplate) {
+        stringRedisTemplate.opsForValue().set(cacheKey, JSONUtil.toJsonStr(dbData));
+        log.info("重建缓存成功。。。。"+Thread.currentThread().getId());
     }
 }

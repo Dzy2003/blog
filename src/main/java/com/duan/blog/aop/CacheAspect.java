@@ -70,7 +70,12 @@ public class CacheAspect {
     }
 
 
-
+    /**
+     * 通过参数列表和缓存的名称和注解方法的参数列表来生成key的后缀
+     * @param args
+     * @param methodName
+     * @return
+     */
     private String getKeyKeySuffix(Object[] args,String methodName) {
         StringBuilder params = new StringBuilder();
         for (Object parameter : args) {
@@ -82,10 +87,17 @@ public class CacheAspect {
         }
         return params.toString();
     }
+
+    /**
+     * 重建缓存
+     * @param mysqlData
+     * @param expire
+     * @param cacheKey
+     * @throws InterruptedException
+     */
     private void rebuildCache(Object mysqlData,Long expire,String cacheKey) throws InterruptedException {
         //Thread.sleep(10000);
         stringRedisTemplate.opsForValue().set(cacheKey, JSONUtil.toJsonStr(mysqlData),expire, TimeUnit.SECONDS);
         log.info("重建缓存成功。。。。"+Thread.currentThread().getId());
     }
-
 }
