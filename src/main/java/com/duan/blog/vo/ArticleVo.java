@@ -32,5 +32,5 @@ public class ArticleVo {
 
     private ArticleBodyVo body;
 
-
+    private Boolean isLiked;
 }

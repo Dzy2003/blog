@@ -17,8 +17,8 @@ class SysUserServiceImplTest {
     @Test
     void login() {
         LoginInfo loginInfo = new LoginInfo();
-        loginInfo.setAccount("admin1");
-        loginInfo.setPassword("admin1");
+        loginInfo.setAccount("admin3");
+        loginInfo.setPassword("admin3");
         Result login = userService.login(loginInfo);
         System.out.println(login);
     }

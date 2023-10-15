@@ -1,11 +1,15 @@
 package com.duan.blog;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.duan.blog.Mapper.ArticleMapper;
 import com.duan.blog.Mapper.TagMapper;
 
 import com.duan.blog.Service.IArticleService;
 import com.duan.blog.Service.IArticleTagService;
+import com.duan.blog.Service.ISysUserService;
+import com.duan.blog.dto.UserDTO;
 import com.duan.blog.pojo.Article;
+import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.CacheClient;
 import com.duan.blog.utils.RedisConstants;
 import com.duan.blog.utils.RedisData;
@@ -18,11 +22,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @SpringBootTest
 @Slf4j
@@ -37,6 +42,8 @@ class BlogApplicationTests {
     CacheClient cacheClient;
     @Resource
     StringRedisTemplate stringRedisTemplate;
+    @Resource
+    ISysUserService userService;
 
     @Test
     public void testRunnable() throws Exception {
@@ -60,7 +67,18 @@ class BlogApplicationTests {
                 10l,
                 TimeUnit.SECONDS);
     }
-
+    @Test
+    public void testSelect(){
+        Set<String> top5 = new HashSet<>(Arrays.asList("1","2","3"));
+        List<UserDTO> result = userService.lambdaQuery()
+                .select(SysUser::getId, SysUser::getAvatar, SysUser::getNickname, SysUser::getAccount)
+                .in(SysUser::getId, top5.stream().map(Long::valueOf).collect(Collectors.toList()))
+                .list()
+                .stream()
+                .map(sysUser -> BeanUtil.copyProperties(sysUser, UserDTO.class))
+                .collect(Collectors.toList());
+        System.out.println(result);
+    }
 }
 
 

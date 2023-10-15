@@ -1,7 +1,6 @@
 package com.duan.blog.Service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -20,18 +19,16 @@ import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.duan.blog.utils.ErrorCode.ARTICLE_NOT_EXIST;
@@ -51,11 +48,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Resource
     ICategoryService categoryService;
     @Resource
-    ThreadService threadService;
-    @Resource
     IArticleTagService articleTagService;
     @Resource
     CacheClient cacheClient;
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
 
     @Override
     @CacheAnnotation(KeyPrefix = RedisConstants.CACHE_Article_KEY)
@@ -121,7 +118,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 //                TimeUnit.MINUTES
 //        );
         //互斥锁方案做缓存
-        ArticleVo articleVo = cacheClient.queryWithLogicalExpire(
+        ArticleVo articleVo = cacheClient.queryWithMutex(
                 RedisConstants.CACHE_Article_KEY + id,
                 ArticleVo.class,
                 () -> ArticleToArticleVo(lambdaQuery().eq(Article::getId, id).one(),true),
@@ -135,12 +132,60 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     @Transactional
-    public Result insertArticle(ArticleInfo articleInfo) {
+    public Result insertOrUpdateArticle(ArticleInfo articleInfo) {
 
         if(articleInfo.getId() == null){
             return Result.success(savaArticle(articleInfo));
         }
         return Result.success(updateArticle(articleInfo));
+    }
+
+    @Override
+    public Result likeArticle(Long id) {
+
+        if(isBlogLiked(id)){
+            like(id);
+        }else{
+            cancel(id);
+        }
+        return Result.success(null);
+    }
+
+    @Override
+    public Result getArticleLikes(Long id) {
+        Set<String> top5 = stringRedisTemplate.opsForZSet().range(
+                RedisConstants.BLOG_LIKED_KEY + id, 0, 4);
+        List<UserDTO> result = userService.lambdaQuery()
+                .select(SysUser::getId, SysUser::getAvatar, SysUser::getNickname, SysUser::getAccount)
+                .in(SysUser::getId, top5.stream().map(Long::valueOf).collect(Collectors.toList()))
+                .last("ORDER BY FIELD(id," + top5.stream().collect(Collectors.joining(",")) + ")")
+                .list()
+                .stream()
+                .map(sysUser -> BeanUtil.copyProperties(sysUser, UserDTO.class))
+                .collect(Collectors.toList());
+        return Result.success(result);
+    }
+
+    /**
+     * 点赞
+     * @param id
+     */
+    private void like(Long id) {
+        lambdaUpdate().setSql("liked = liked + 1").eq(Article::getId, id).update();
+        stringRedisTemplate.opsForZSet().add(RedisConstants.BLOG_LIKED_KEY + id,
+                UserHolder.getUser().getId().toString(),
+                System.currentTimeMillis());
+    }
+
+    /**
+     * 取消点赞
+     * @param id
+     */
+    private void cancel(Long id) {
+        if(lambdaUpdate().setSql("liked = liked - 1").eq(Article::getId, id).update()){
+            stringRedisTemplate.opsForZSet().remove(RedisConstants.BLOG_LIKED_KEY + id,
+                    UserHolder.getUser().getId().toString());
+        }
     }
 
     /**
@@ -152,11 +197,14 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         Article article = BeanUtil.copyProperties(articleInfo, Article.class);
         article.setCategoryId(articleInfo.getCategory().getId());
         updateById(article);
-
+        //删除缓存
+        cacheClient.delete(RedisConstants.CACHE_Article_KEY + articleInfo.getId());
+        //更新article_body表
         ArticleBody articleBody = BeanUtil.copyProperties(articleInfo.getBody(), ArticleBody.class);
         articleBodyService.lambdaUpdate()
                 .eq(ArticleBody::getArticleId,article.getId()).update(articleBody);
-        //一条文章涉及多个标签，修改时先将原本标签记录删除后再进行增加
+
+        ////更新article_tag表，一条文章涉及多个标签，修改时先将原本标签记录删除后再进行增加
         articleTagService.lambdaUpdate().eq(ArticleTag::getArticleId, articleInfo.getId()).remove();
         this.insertArticleTag(articleInfo,article);
         return article.getId();
@@ -175,7 +223,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         article.setBodyId(-1l);
         article.setCategoryId(articleInfo.getCategory().getId());
         article.setCreateDate(System.currentTimeMillis());
-
+        article.setLiked(0);
         save(article);
         insertArticleBody(articleInfo,article.getId());
         insertArticleTag(articleInfo,article);
@@ -256,14 +304,36 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         ArticleVo articleVo = BeanUtil.copyProperties(article, ArticleVo.class);
         setArticleVoTags(articleVo);
         setArticleVoAuthor(article, articleVo);
+        setArticleVoLiked(articleVo);
         formatArticleVoAuthorCreateDate(article, articleVo);
-
         if(isDetail){
             setArticleVoBodyContent(article, articleVo);
             setArticleVoBodyCategory(article, articleVo);
         }
 
         return articleVo;
+    }
+
+    /**
+     * 设置articleVo的isLike属性
+     * @param articleVo
+     */
+    private void setArticleVoLiked(ArticleVo articleVo) {
+        if(UserHolder.getUser() == null) return;
+        articleVo.setIsLiked(isBlogLiked(articleVo.getId()));
+
+    }
+
+    /**
+     * 获取用户当前用户是否点赞过该博客
+     * @param articleId
+     * @return
+     */
+    private Boolean isBlogLiked(Long articleId) {
+        Double score = stringRedisTemplate.opsForZSet().score(
+                RedisConstants.BLOG_LIKED_KEY + articleId,
+                UserHolder.getUser().getId().toString());
+        return score == null;
     }
 
     /**

@@ -26,7 +26,8 @@ public class MvcConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/test",
                         "/comments/create/change",
-                        "/articles/publish"
+                        "/articles/publish",
+                        "/articles/likes/**"
                 );
     }
 }

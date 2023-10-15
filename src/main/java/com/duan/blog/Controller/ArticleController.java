@@ -43,11 +43,20 @@ public class ArticleController {
 
     @PostMapping("/publish")
     public Result publishArticle(@RequestBody ArticleInfo articleInfo){
-        return articleService.insertArticle(articleInfo);
+        return articleService.insertOrUpdateArticle(articleInfo);
     }
     @PostMapping("/{id}")
     public Result EditArticle(@PathVariable("id") Long id){
         return articleService.detailArticle(id,true);
     }
 
+    @PutMapping("/likes/{id}")
+    public Result likeArticle(@PathVariable("id") Long id){
+        return articleService.likeArticle(id);
+    }
+
+    @GetMapping("/likeUsers/{id}")
+    public Result queryArticleLikes(@PathVariable("id") Long id){
+        return articleService.getArticleLikes(id);
+    }
 }
