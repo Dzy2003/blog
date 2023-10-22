@@ -54,7 +54,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     StringRedisTemplate stringRedisTemplate;
 
     @Override
-    @CacheAnnotation(KeyPrefix = RedisConstants.CACHE_Article_KEY)
+//    @CacheAnnotation(KeyPrefix = RedisConstants.CACHE_Article_KEY)
     @LogAnnotation(module = "Article", operator = "查询文章列表")
     public Result listArticles(PageInfo pageInfo) {
 //        if(pageInfo == null) return Result.fail(1,"No page info");
@@ -86,7 +86,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private List<Article> getArticles(PageInfo pageInfo) {
         return articleMapper.listArticle(new Page<>(pageInfo.getPage(), pageInfo.getPageSize()),
                 pageInfo.getCategoryId(), pageInfo.getTagId(),
-                pageInfo.getYear(), pageInfo.getMonth()).getRecords();
+                pageInfo.getYear(), pageInfo.getMonth(),pageInfo.getAuthorId()).getRecords();
     }
 
     @Override

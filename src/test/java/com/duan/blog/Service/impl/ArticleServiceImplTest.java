@@ -20,8 +20,9 @@ class ArticleServiceImplTest {
         PageInfo pageInfo = new PageInfo();
         pageInfo.setPage(1);
         pageInfo.setPageSize(4);
-        pageInfo.setCategoryId(3l);
-        pageInfo.setTagId(8l);
+//        pageInfo.setCategoryId(3l);
+//        pageInfo.setTagId(8l);
+        pageInfo.setAuthorId(1l);
         System.out.println(articleService.listArticles(pageInfo));
     }
 

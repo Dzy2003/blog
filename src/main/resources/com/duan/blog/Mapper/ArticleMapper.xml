@@ -13,6 +13,9 @@
             <if test="tagId != null">
                 and id in (select article_id from tb_article_tag where tag_id=#{tagId})
             </if>
+            <if test="authorId != null">
+                and author_id = #{authorId}
+            </if>
         </where>
         order by create_date desc
     </select>

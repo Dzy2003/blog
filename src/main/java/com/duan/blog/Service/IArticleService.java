@@ -8,8 +8,13 @@ import com.duan.blog.pojo.Article;
 
 public interface IArticleService extends IService<Article> {
     /**
-     * 展示文章列表
+     * 展示文章列表，通过pageInfo参数动态查询
      * @param pageInfo
+     * 1.仅传page和pageSize则是首页查询
+     * 2.传入categoryId则是分类查询
+     * 3.传入year和mouth则是归档查询
+     * 4.传入authorId则是用户文章查询
+     * 动态sql保证传入多少参数就有多少查询条件
      * @return
      */
     Result listArticles(PageInfo pageInfo);
