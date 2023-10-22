@@ -13,7 +13,7 @@ public class RedisConstants {
     public static final String LOCK_Article_KEY = "lock:article:";
     public static final Long LOCK_Article_TTL = 10L;
 
-
+    public static final String FOLLOWED_KEY = "follow:";
     public static final String BLOG_LIKED_KEY = "Article:liked:";
     public static final String FEED_KEY = "feed:";
     public static final String USER_SIGN_KEY = "sign:";
