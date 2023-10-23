@@ -13,6 +13,7 @@ import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.CacheClient;
 import com.duan.blog.utils.RedisConstants;
 import com.duan.blog.utils.RedisData;
+import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.ArchivesVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -28,6 +30,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static com.duan.blog.utils.RedisConstants.FEED_KEY;
+import static com.duan.blog.utils.SystemConstants.PAGE_SIZE;
 
 @SpringBootTest
 @Slf4j
@@ -69,15 +74,15 @@ class BlogApplicationTests {
     }
     @Test
     public void testSelect(){
-        Set<String> top5 = new HashSet<>(Arrays.asList("1","2","3"));
-        List<UserDTO> result = userService.lambdaQuery()
-                .select(SysUser::getId, SysUser::getAvatar, SysUser::getNickname, SysUser::getAccount)
-                .in(SysUser::getId, top5.stream().map(Long::valueOf).collect(Collectors.toList()))
-                .list()
-                .stream()
-                .map(sysUser -> BeanUtil.copyProperties(sysUser, UserDTO.class))
+        Set<ZSetOperations.TypedTuple<String>> feedArticles =
+                stringRedisTemplate.opsForZSet().reverseRangeByScoreWithScores(
+                        FEED_KEY + 3,
+                        0, 1698056309000l, 0, PAGE_SIZE);
+        List<Long> ids = feedArticles.stream()
+                .map(ZSetOperations.TypedTuple::getValue)
+                .map(Long::valueOf)
                 .collect(Collectors.toList());
-        System.out.println(result);
+        System.out.println(ids);
     }
 }
 

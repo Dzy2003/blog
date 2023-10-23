@@ -45,6 +45,7 @@ public class ArticleController {
     public Result publishArticle(@RequestBody ArticleInfo articleInfo){
         return articleService.insertOrUpdateArticle(articleInfo);
     }
+
     @PostMapping("/{id}")
     public Result EditArticle(@PathVariable("id") Long id){
         return articleService.detailArticle(id,true);
@@ -59,4 +60,15 @@ public class ArticleController {
     public Result queryArticleLikes(@PathVariable("id") Long id){
         return articleService.getArticleLikes(id);
     }
+
+    @GetMapping("of/follow")
+    public Result listBlogOfFollow(@RequestParam("lastID") Long max,
+                                   @RequestParam(value = "offset",defaultValue = "0") Integer offset){
+        return articleService.getBlogOfFollow(max,offset);
+
+    }
+
+    
+
+
 }

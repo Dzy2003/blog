@@ -152,7 +152,6 @@ public class CacheClient {
             }
             log.info("我拿到锁，进行缓存重建,{},{}",key,Thread.currentThread().getId());
             dbData = dbSupplier.get();
-            Thread.sleep(15000);
             //缓存穿透
             if(dbData == null){
                 set(key, "",CACHE_NULL_TTL,TimeUnit.MINUTES );

@@ -65,4 +65,13 @@ public interface IArticleService extends IService<Article> {
      * @return
      */
     Result getArticleLikes(Long id);
+
+    /**
+     *滚动查询用户关注用户的博客
+     * @param max 最大时间戳（上一页的最小时间戳）
+     * @param offset 偏移量（第一页为0，之后为1）
+     * @return
+     */
+    Result getBlogOfFollow(Long max, Integer offset);
+
 }

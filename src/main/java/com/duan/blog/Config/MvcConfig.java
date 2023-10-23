@@ -28,7 +28,8 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/comments/create/change",
                         "/articles/publish",
                         "/articles/likes/**",
-                        "/follows/**"
+                        "/follows/**",
+                        "/articles/of/follow"
                 );
     }
 }

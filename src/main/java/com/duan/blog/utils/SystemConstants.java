@@ -12,4 +12,6 @@ public class SystemConstants {
 
     public static final String SLAT = "mszlu!@#";
 
+    public static final int PAGE_SIZE = 3;
+
 }
