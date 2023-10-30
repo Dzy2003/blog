@@ -18,10 +18,12 @@ import com.duan.blog.vo.ArchivesVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -35,6 +37,7 @@ import static com.duan.blog.utils.RedisConstants.FEED_KEY;
 import static com.duan.blog.utils.SystemConstants.PAGE_SIZE;
 
 @SpringBootTest
+@RunWith(SpringJUnit4ClassRunner.class)
 @Slf4j
 class BlogApplicationTests {
     @Resource

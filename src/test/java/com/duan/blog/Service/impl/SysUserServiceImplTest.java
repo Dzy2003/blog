@@ -1,14 +1,15 @@
 package com.duan.blog.Service.impl;
 
 import com.duan.blog.Service.ISysUserService;
-import com.duan.blog.dto.LoginInfo;
-import com.duan.blog.dto.RegisterInfo;
-import com.duan.blog.dto.Result;
+import com.duan.blog.dto.*;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 @SpringBootTest
 class SysUserServiceImplTest {
     @Resource
@@ -17,8 +18,8 @@ class SysUserServiceImplTest {
     @Test
     void login() {
         LoginInfo loginInfo = new LoginInfo();
-        loginInfo.setAccount("admin3");
-        loginInfo.setPassword("admin3");
+        loginInfo.setAccount("admin");
+        loginInfo.setPassword("admin");
         Result login = userService.login(loginInfo);
         System.out.println(login);
     }
@@ -39,5 +40,38 @@ class SysUserServiceImplTest {
         registerInfo.setNickname("阿尔卡蒂奥");
         Result register = userService.register(registerInfo);
         System.out.println(register);
+    }
+
+    @Test
+    void logout() {
+    }
+
+    @Test
+    void getUserInfo() {
+        System.out.println(userService.getUserInfo(1L));
+    }
+
+    @Test
+    void updateUserInfo() {
+        EditInfo editInfo = EditInfo.builder()
+                .id(2L)
+                .nickname("阿尔卡蒂奥")
+                .build();
+        userService.updateUserInfo(editInfo);
+    }
+
+    @Test
+    void updatePassword() {
+        System.out.println(userService.UpdatePassword(new ChangeInfo()
+                .builder()
+                .account("admin")
+                .oldPassword("adminn")
+                .newPassword("admin")
+                .build()));
+    }
+
+    @Test
+    void listFans() {
+        System.out.println(userService.listFans());
     }
 }
