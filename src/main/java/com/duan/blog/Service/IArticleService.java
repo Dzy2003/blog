@@ -15,54 +15,53 @@ public interface IArticleService extends IService<Article> {
      * 3.传入year和mouth则是归档查询
      * 4.传入authorId则是用户文章查询
      * 动态sql保证传入多少参数就有多少查询条件
-     * @return
+     *
+     * @return 文章列表
      */
     Result listArticles(PageInfo pageInfo);
 
     /**
      * 获取最火文章列表
-     * @return
      */
     Result getHotArticles();
 
     /**
      * 获取最新文章列表
-     * @return
      */
     Result getNewArticles();
 
     /**
      * 获取文章归档
-     * @return
+     * @return 年月和对应文章数
      */
     Result getArchives();
 
     /**
      * 根据ID获取文章详细信息
-     * @param id
-     * @param isEdit
-     * @return
+     * @param id 文章Id
+     * @param isEdit 是否是编辑文章
+     * @return 文章的详细信息
      */
     Result detailArticle(Long id,Boolean isEdit);
 
     /**
      * 更新或者插入文章(取决于articleInfo是否有id)
-     * @param articleInfo
-     * @return
+     * @param articleInfo 传入的文章信息
+     * @return 成功或者失败
      */
     Result insertOrUpdateArticle(ArticleInfo articleInfo);
 
     /**
      * 用户点赞文章
-     * @param id
-     * @return
+     * @param id 文章id
+     * @return 成功或者失败
      */
     Result likeArticle(Long id);
 
     /**
      * 获取文章的点赞用户（按照最新点赞排序）
-     * @param id
-     * @return
+     * @param id 文章id
+     * @return 点赞用户
      */
     Result getArticleLikes(Long id);
 
@@ -70,7 +69,7 @@ public interface IArticleService extends IService<Article> {
      *滚动查询用户关注用户的博客
      * @param max 最大时间戳（上一页的最小时间戳）
      * @param offset 偏移量（第一页为0，之后为1）
-     * @return
+     * @return 文章列表
      */
     Result getBlogOfFollow(Long max, Integer offset);
 

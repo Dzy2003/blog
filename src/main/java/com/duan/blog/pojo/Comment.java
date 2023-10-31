@@ -1,17 +1,16 @@
 package com.duan.blog.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 /**
  * @author 白日
- * @date Created in 2023/10/2 9:46
+ * @Date Created in 2023/10/2 9:46
  */
 @Data
+@TableName("tb_comment")
 public class Comment {
     @TableId(value = "id", type = IdType.AUTO)
 

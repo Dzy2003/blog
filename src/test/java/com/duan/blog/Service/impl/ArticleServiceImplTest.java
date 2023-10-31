@@ -49,4 +49,25 @@ class ArticleServiceImplTest {
         Result result = articleService.detailArticle(1l,false);
         System.out.println(result);
     }
+
+    @Test
+    void listArticles() {
+    }
+
+    @Test
+    void insertOrUpdateArticle() {
+    }
+
+    @Test
+    void likeArticle() {
+    }
+
+    @Test
+    void getArticleLikes() {
+        System.out.println(articleService.getArticleLikes(2L));
+    }
+
+    @Test
+    void getBlogOfFollow() {
+    }
 }
