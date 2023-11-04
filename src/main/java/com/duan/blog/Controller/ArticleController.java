@@ -113,7 +113,16 @@ public class ArticleController {
     public Result listBlogOfFollow(@RequestParam("lastID") Long max,
                                    @RequestParam(value = "offset",defaultValue = "0") Integer offset){
         return articleService.getBlogOfFollow(max,offset);
-
     }
 
+    /**
+     * 删除文章
+     * @param articleId 文章id
+     * @param authorId 作者id
+     * @return 文章作者与登录用户相同则删除,否则失败
+     */
+    @DeleteMapping("/articleId/{authorId}")
+    public Result deleteArticleByAuthorId(@PathVariable("articleId") Long articleId,@PathVariable Long authorId){
+        return articleService.deleteArticleByAuthorId(articleId,authorId);
+    }
 }

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -37,23 +38,46 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
 
     @Override
     public Result getCommentsByArticleId(Long id) {
-        List<Comment> commentList = lambdaQuery()
+        Map<Integer, List<Comment>> comments = lambdaQuery()
                 .eq(Comment::getArticleId, id)
-                .eq(Comment::getLevel, 1)
-                .list();
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(Comment::getLevel));
+        List<Comment> parents = comments.get(1);
+        List<Comment> children = comments.get(2);
 
-        if(commentList == null || commentList.size() == 0) {return Result.success(null);}
+        if(parents == null || parents.size() == 0) {return Result.success(null);}
 
-        List<CommentVo> commentVos = commentList.stream().map((comment -> {
-            CommentVo commentVo = CommentToCommentVo(comment);
-            if(comment.getLevel() == 1){
-                setChildren(comment.getId(), commentVo);
-            }
-            return commentVo;
-        })).collect(Collectors.toList());
+        List<CommentVo> parentsVo = parents
+                .stream()
+                .map(this::CommentToCommentVo)
+                .toList();
 
-        return Result.success(commentVos);
+        setChildren(children, parentsVo);
+        return Result.success(parentsVo);
+    }
 
+    /**
+     * 将父评论对应的子评论设置到父评论Vo中
+     * @param children 子评论集合
+     * @param commentVos 父评论Vo集合
+     *
+     */
+    private void setChildren(List<Comment> children, List<CommentVo> commentVos) {
+        commentVos.forEach(commentVo -> commentVo.setChildrens(this.getChildren(commentVo, children)));
+    }
+
+    /**
+     * 获得该父评论对应的子评论
+     * @param commentVo 父评论
+     * @param children 子评论集合
+     * @return 父评论下的子评论集合
+     */
+    private List<CommentVo> getChildren(CommentVo commentVo, List<Comment> children) {
+        return children.stream()
+                .filter(child -> child.getParentId().equals(commentVo.getId()))
+                .map(this::CommentToCommentVo)
+                .toList();
     }
 
     @Override
@@ -75,7 +99,8 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
     private void updateArticleCommentCount(Comment comment) {
         articleService.lambdaUpdate()
                 .setSql("comment_counts = comment_counts+1")
-                .eq(Article::getId, comment.getArticleId()).update();
+                .eq(Article::getId, comment.getArticleId())
+                .update();
     }
 
     /**
@@ -93,18 +118,6 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         comment.setLevel(commentInfo.getParent() == 0 ? 1 : 2);
     }
 
-    /**
-     * 若该文章是1级评论，则到数据库中查询所有该评论的子评论并设置commentVo的Children属性
-     * @param commentId
-     * @param commentVo
-     */
-    private void setChildren(Long commentId, CommentVo commentVo) {
-        commentVo.setChildrens(lambdaQuery()
-                .eq(Comment::getParentId, commentId)
-                .list().stream()
-                .map(this::CommentToCommentVo)
-                .collect(Collectors.toList()));
-    }
 
     /**
      * 将Comment转换为CommentVo,并设置Author和ToUser属性

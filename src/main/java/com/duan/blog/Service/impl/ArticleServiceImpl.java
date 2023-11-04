@@ -10,6 +10,7 @@ import com.duan.blog.aop.annotation.LogAnnotation;
 import com.duan.blog.dto.*;
 import com.duan.blog.pojo.*;
 import com.duan.blog.utils.CacheClient;
+import com.duan.blog.utils.ErrorCode;
 import com.duan.blog.utils.RedisConstants;
 import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.*;
@@ -157,6 +158,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return Result.success(null);
         }
         return Result.success(getScrollResult(feedArticles));
+    }
+
+    @Override
+    public Result deleteArticleByAuthorId(Long articleId, Long authorId) {
+        if(!authorId.equals(UserHolder.getUser().getId())){
+            articleMapper.deleteById(articleId);
+            return Result.success(null);
+        }
+        return Result.fail(ErrorCode.NOT_AUTHOR.getCode(),ErrorCode.NOT_AUTHOR.getMsg());
     }
 
     /**

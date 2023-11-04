@@ -3,11 +3,14 @@ package com.duan.blog.Service.impl;
 import com.duan.blog.Service.IArticleService;
 import com.duan.blog.dto.PageInfo;
 import com.duan.blog.dto.Result;
+import com.duan.blog.utils.ErrorCode;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @SpringBootTest
@@ -69,5 +72,17 @@ class ArticleServiceImplTest {
 
     @Test
     void getBlogOfFollow() {
+    }
+
+    @Test
+    void deleteArticleByAuthorId() {
+        // Arrange
+        Long articleId = 1405916999732707340L;
+        Long authorId = 2L;
+
+        // Act
+        Result result = articleService.deleteArticleByAuthorId(articleId, authorId);
+
+        System.out.println(result);
     }
 }

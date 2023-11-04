@@ -73,4 +73,11 @@ public interface IArticleService extends IService<Article> {
      */
     Result getBlogOfFollow(Long max, Integer offset);
 
+    /**
+     * 删除文章
+     * @param articleId 文章Id
+     * @param authorId 作者Id
+     * @return 成功或者失败
+     */
+    Result deleteArticleByAuthorId(Long articleId, Long authorId);
 }

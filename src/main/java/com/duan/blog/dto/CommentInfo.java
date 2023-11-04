@@ -4,7 +4,7 @@ import lombok.Data;
 
 /**
  * @author 白日
- * @date Created in 2023/10/2 17:45
+ * @since 2023/10/2 17:45
  */
 @Data
 public class CommentInfo {
@@ -12,7 +12,7 @@ public class CommentInfo {
 
     private String content;
 
-    private Long parent = 0l;
+    private Long parent = 0L;
 
-    private Long toUserId = 0l;
+    private Long toUserId = 0L;
 }
