@@ -33,4 +33,6 @@ public class ArticleVo {
     private ArticleBodyVo body;
 
     private Boolean isLiked;
+
+    private Long Likes;
 }
