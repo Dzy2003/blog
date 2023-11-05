@@ -14,5 +14,10 @@ public interface ICommentsService extends IService<Comment> {
      */
     Result getCommentsByArticleId(Long id);
 
+    /**
+     * 插入评论
+     * @param commentInfo
+     * @return
+     */
     Result insertComment(CommentInfo commentInfo);
 }

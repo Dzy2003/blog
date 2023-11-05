@@ -17,11 +17,13 @@ public class CommentVo {
 
     private String content;
 
-    private List<CommentVo> childrens;
+    private List<CommentVo> children;
 
     private String createDate;
 
     private Integer level;
 
     private UserDTO toUser;
+
+    private Long childrenCount;
 }

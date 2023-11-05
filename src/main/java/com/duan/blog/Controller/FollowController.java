@@ -20,7 +20,7 @@ public class FollowController {
      * 关注
      * @param followUserId 关注的用户id
      * @param isFollow 关注或者取关
-     * @return
+     * @return 关注成功或者失败
      */
     @PutMapping("/{uid}/{isFollow}")
     public Result followUser(@PathVariable("uid") Long followUserId, @PathVariable Boolean isFollow){
@@ -30,7 +30,7 @@ public class FollowController {
     /**
      * 当前用户是否关注该用户
      * @param uid 该用户id
-     * @return
+     * @return true，false
      */
     @GetMapping("/{uid}")
     public Result isFollowUser(@PathVariable("uid") Long uid){
@@ -40,7 +40,7 @@ public class FollowController {
     /**
      * 获取当前用户和该用户的共同关注
      * @param uid 该用户id
-     * @return
+     * @return 共同关注
      */
     @GetMapping("/common/{uid}")
     public Result getCommonUsers(@PathVariable("uid") Long uid){

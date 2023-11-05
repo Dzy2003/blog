@@ -18,16 +18,29 @@ public class CategoryController {
     @Resource
     ICategoryService categoryService;
 
+    /**
+     * 获取分类列表
+     * @return 分类列表
+     */
     @GetMapping
     public Result listCategories(){
         return categoryService.getAllCategories();
     }
 
+    /**
+     * 获取所有分类详情
+     * @return
+     */
     @GetMapping("/detail")
     public Result listCategoriesDetail(){
         return categoryService.getCategoriesDetail();
     }
 
+    /**
+     * 获取某个分类详情
+     * @param id 分类id
+     * @return
+     */
     @GetMapping("/detail/{id}")
     public Result CategoryDetail(@PathVariable Long id){
         return categoryService.getCategoriesDetailById(id);

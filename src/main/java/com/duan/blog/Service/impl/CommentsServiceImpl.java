@@ -13,7 +13,6 @@ import com.duan.blog.pojo.Article;
 import com.duan.blog.pojo.Comment;
 import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.UserHolder;
-import com.duan.blog.vo.ArticleVo;
 import com.duan.blog.vo.CommentVo;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -64,7 +63,22 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      *
      */
     private void setChildren(List<Comment> children, List<CommentVo> commentVos) {
-        commentVos.forEach(commentVo -> commentVo.setChildrens(this.getChildren(commentVo, children)));
+        commentVos.forEach(commentVo -> {
+            commentVo.setChildren(this.getChildren(commentVo, children));
+            commentVo.setChildrenCount(getChildrenCount(commentVo, children));
+        });
+    }
+    /**
+     * 获取指定评论的子评论数量
+     * @param commentVo 评论对象
+     * @param children 子评论列表
+     * @return 子评论数量
+     */
+    private Long getChildrenCount(CommentVo commentVo, List<Comment> children) {
+        return children
+                .stream()
+                .filter(child -> child.getParentId().equals(commentVo.getId()))
+                .count();
     }
 
     /**
