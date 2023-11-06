@@ -372,7 +372,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         setArticleVoAuthor(article.getAuthorId(), articleVo);
         setArticleVoLiked(articleVo);
         formatArticleVoAuthorCreateDate(article.getCreateDate(), articleVo);
-        setArticleVoLikes(article, articleVo);
+        setArticleVoLikes(articleVo);
         if(isDetail){
             setArticleVoBodyContent(article.getId(), articleVo);
             setArticleVoBodyCategory(article.getCategoryId(), articleVo);
@@ -383,11 +383,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     /**
      * 设置articleVo的likes属性
-     * @param article
-     * @param articleVo
+     * @param articleVo articleVo对象
      */
-    private void setArticleVoLikes(Article article, ArticleVo articleVo) {
-        articleVo.setLikes(stringRedisTemplate.opsForZSet().count(BLOG_LIKED_KEY + article.getId()
+    private void setArticleVoLikes(ArticleVo articleVo) {
+        articleVo.setLikes(stringRedisTemplate.opsForZSet().count(BLOG_LIKED_KEY + articleVo.getId()
                 ,0, System.currentTimeMillis()));
     }
 

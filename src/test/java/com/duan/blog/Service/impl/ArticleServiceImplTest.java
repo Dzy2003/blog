@@ -49,7 +49,7 @@ class ArticleServiceImplTest {
 
     @Test
     void detailArticle() {
-        Result result = articleService.detailArticle(1l,false);
+        Result result = articleService.detailArticle(1L,false);
         System.out.println(result);
     }
 

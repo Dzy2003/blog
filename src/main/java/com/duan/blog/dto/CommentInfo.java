@@ -8,11 +8,12 @@ import lombok.Data;
  */
 @Data
 public class CommentInfo {
+    // 文章ID
     private Long articleId;
-
+    // 评论内容
     private String content;
-
+    // 父评论ID
     private Long parent = 0L;
-
+    // 回复用户ID
     private Long toUserId = 0L;
 }
