@@ -1,6 +1,7 @@
 package com.duan.blog.Service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.CommentsMapper;
 import com.duan.blog.Service.IArticleService;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -36,60 +38,55 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
     IArticleService articleService;
 
     @Override
-    public Result getCommentsByArticleId(Long id) {
-        Map<Integer, List<Comment>> comments = lambdaQuery()
+    public Result getCommentsByArticleId(Long id, Integer page, Integer size) {
+        List<Comment> parents = lambdaQuery()
                 .eq(Comment::getArticleId, id)
-                .list()
-                .stream()
-                .collect(Collectors.groupingBy(Comment::getLevel));
-        List<Comment> parents = comments.get(1);
-        List<Comment> children = comments.get(2);
+                .eq(Comment::getLevel, 1)
+                .orderByAsc(Comment::getCreateDate)
+                .page(new Page<>(page, size))
+                .getRecords();
 
-        if(parents == null || parents.size() == 0) {return Result.success(null);}
-
-        List<CommentVo> parentsVo = parents
-                .stream()
+        if(parents.size() == 0) return Result.success(Collections.emptyList());
+        List<CommentVo> commentVo = parents.stream()
                 .map(this::CommentToCommentVo)
+                .map(this::setChildren)
                 .toList();
-
-        setChildren(children, parentsVo);
-        return Result.success(parentsVo);
+        return Result.success(commentVo);
     }
 
     /**
      * 将父评论对应的子评论设置到父评论Vo中
-     * @param children 子评论集合
-     * @param commentVos 父评论Vo集合
+     * @param parent
      *
      */
-    private void setChildren(List<Comment> children, List<CommentVo> commentVos) {
-        commentVos.forEach(commentVo -> {
-            commentVo.setChildren(this.getChildren(commentVo, children));
-            commentVo.setChildrenCount(getChildrenCount(commentVo, children));
-        });
+    private CommentVo setChildren(CommentVo parent) {
+        parent.setChildren(getChildren(parent.getId()));
+        parent.setChildrenCount(getChildrenCount(parent.getId()));
+        return parent;
     }
     /**
      * 获取指定评论的子评论数量
-     * @param commentVo 评论对象
-     * @param children 子评论列表
+     * @param parentId 父评论id
      * @return 子评论数量
      */
-    private Long getChildrenCount(CommentVo commentVo, List<Comment> children) {
-        return children
-                .stream()
-                .filter(child -> child.getParentId().equals(commentVo.getId()))
-                .count();
+    private Long getChildrenCount(Long parentId) {
+        return lambdaQuery()
+               .eq(Comment::getParentId, parentId)
+               .count();
     }
 
     /**
      * 获得该父评论对应的子评论
-     * @param commentVo 父评论
-     * @param children 子评论集合
+     * @param parentId 父评论Id
      * @return 父评论下的子评论集合
      */
-    private List<CommentVo> getChildren(CommentVo commentVo, List<Comment> children) {
-        return children.stream()
-                .filter(child -> child.getParentId().equals(commentVo.getId()))
+    private List<CommentVo> getChildren(Long parentId) {
+        return lambdaQuery()
+                .eq(Comment::getParentId, parentId)
+                .orderByAsc(Comment::getCreateDate)
+                .last("limit 3")
+                .list()
+                .stream()
                 .map(this::CommentToCommentVo)
                 .toList();
     }

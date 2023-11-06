@@ -4,7 +4,6 @@ import com.duan.blog.Service.ICommentsService;
 import com.duan.blog.dto.CommentInfo;
 import com.duan.blog.dto.Result;
 import jakarta.annotation.Resource;
-import org.springframework.http.server.RequestPath;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,8 +22,10 @@ public class CommentsController {
      * @return 文章vo列表
      */
     @GetMapping("/article/{id}")
-    public Result listComments(@PathVariable("id") Long id){
-        return commentsService.getCommentsByArticleId(id);
+    public Result listComments(@PathVariable("id") Long id,
+                               @RequestParam(value = "page", defaultValue = "1") Integer page,
+                               @RequestParam(value = "size", defaultValue = "5") Integer size){
+        return commentsService.getCommentsByArticleId(id, page, size);
     }
 
     /**
