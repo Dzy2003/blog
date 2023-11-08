@@ -21,4 +21,11 @@ public interface ICommentsService extends IService<Comment> {
      * @return
      */
     Result insertComment(CommentInfo commentInfo);
+
+    /**
+     * 获取该评论的所有回复
+     * @param id 评论ID
+     * @return 评论下的回复
+     */
+    Result getChildComments(Long id, Integer page, Integer size);
 }

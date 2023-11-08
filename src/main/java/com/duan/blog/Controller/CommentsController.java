@@ -37,4 +37,17 @@ public class CommentsController {
     public Result comment(@RequestBody CommentInfo commentInfo){
         return commentsService.insertComment(commentInfo);
     }
+
+    /**
+     * 查询评论回复
+     * @param id 评论Id
+     * @return 评论回复列表
+     */
+    @GetMapping("/{id}")
+    public Result getReply(@PathVariable("id") Long id,
+                           @RequestParam(value = "page", defaultValue = "1") Integer page,
+                           @RequestParam(value = "size", defaultValue = "5") Integer size){
+        return commentsService.getChildComments(id, page, size);
+    }
+
 }

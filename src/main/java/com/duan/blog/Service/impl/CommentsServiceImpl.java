@@ -1,5 +1,4 @@
 package com.duan.blog.Service.impl;
-
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,16 +14,14 @@ import com.duan.blog.pojo.Comment;
 import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.CommentVo;
+import com.duan.blog.vo.ReplyVo;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author 白日
@@ -46,7 +43,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
                 .page(new Page<>(page, size))
                 .getRecords();
 
-        if(parents.size() == 0) return Result.success(Collections.emptyList());
+        if(parents.isEmpty()) return Result.success(Collections.emptyList());
         List<CommentVo> commentVo = parents.stream()
                 .map(this::CommentToCommentVo)
                 .map(this::setChildren)
@@ -54,9 +51,44 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         return Result.success(commentVo);
     }
 
+
+    @Override
+    @Transactional
+    public Result insertComment(CommentInfo commentInfo) {
+        Comment comment = getCommentByCommentInfo(commentInfo);
+        updateArticleCommentCount(comment.getArticleId());
+        save(comment);
+
+        return Result.success(null);
+    }
+
+    @Override
+    public Result getChildComments(Long id, Integer page, Integer size) {
+        List<Comment> reply = getReplyByCommentId(id , page, size);
+        List<ReplyVo> replyVos = replyList2ReplyVoList(reply);
+        return Result.success(replyVos);
+    }
+
+    private List<ReplyVo> replyList2ReplyVoList(List<Comment> reply) {
+        return reply.stream()
+                .map(this::CommentToCommentVo)
+                .map(commentVo -> (ReplyVo) commentVo)
+                .toList();
+    }
+
+
+    private List<Comment> getReplyByCommentId(Long id, Integer page, Integer size) {
+        return lambdaQuery()
+                .select(Comment::getId,Comment::getAuthorId,Comment::getCreateDate,Comment::getToUid,Comment::getContent)
+                .eq(Comment::getParentId, id)
+                .page(new Page<>(page, size))
+                .getRecords();
+    }
+
+
     /**
      * 将父评论对应的子评论设置到父评论Vo中
-     * @param parent
+     * @param parent 父评论
      *
      */
     private CommentVo setChildren(CommentVo parent) {
@@ -71,12 +103,13 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      */
     private Long getChildrenCount(Long parentId) {
         return lambdaQuery()
-               .eq(Comment::getParentId, parentId)
-               .count();
+                .eq(Comment::getParentId, parentId)
+                .count();
     }
 
     /**
      * 获得该父评论对应的子评论
+     *
      * @param parentId 父评论Id
      * @return 父评论下的子评论集合
      */
@@ -91,35 +124,23 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
                 .toList();
     }
 
-    @Override
-    @Transactional
-    public Result insertComment(CommentInfo commentInfo) {
-        Comment comment = new Comment();
-
-        enrichComment(commentInfo, comment);
-        updateArticleCommentCount(comment);
-        save(comment);
-
-        return Result.success(null);
-    }
-
     /**
      * 评论后将文章的评论数增加
-     * @param comment
+     * @param articleId 文章id
      */
-    private void updateArticleCommentCount(Comment comment) {
+    private void updateArticleCommentCount(Long articleId) {
         articleService.lambdaUpdate()
                 .setSql("comment_counts = comment_counts+1")
-                .eq(Article::getId, comment.getArticleId())
+                .eq(Article::getId, articleId)
                 .update();
     }
 
     /**
-     * 封装Comment的属性
-     * @param commentInfo
-     * @param comment
+     * 评论信息转换位评论的实体类
+     * @param commentInfo 评论信息
      */
-    private void enrichComment(CommentInfo commentInfo, Comment comment) {
+    private Comment getCommentByCommentInfo(CommentInfo commentInfo) {
+        Comment comment = new Comment();
         comment.setAuthorId(UserHolder.getUser().getId());
         comment.setCreateDate(System.currentTimeMillis());
         comment.setToUid(commentInfo.getToUserId());
@@ -127,6 +148,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         comment.setArticleId(commentInfo.getArticleId());
         comment.setParentId(commentInfo.getParent());
         comment.setLevel(commentInfo.getParent() == 0 ? 1 : 2);
+        return comment;
     }
 
 
