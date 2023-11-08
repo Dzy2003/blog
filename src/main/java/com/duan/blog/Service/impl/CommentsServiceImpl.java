@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * @author 白日
  * @date Created in 2023/10/1 10:25
@@ -113,7 +115,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      * @param parentId 父评论Id
      * @return 父评论下的子评论集合
      */
-    private List<CommentVo> getChildren(Long parentId) {
+    private List<ReplyVo> getChildren(Long parentId) {
         return lambdaQuery()
                 .eq(Comment::getParentId, parentId)
                 .orderByAsc(Comment::getCreateDate)
@@ -121,6 +123,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
                 .list()
                 .stream()
                 .map(this::CommentToCommentVo)
+                .map(commentVo -> (ReplyVo) commentVo)
                 .toList();
     }
 

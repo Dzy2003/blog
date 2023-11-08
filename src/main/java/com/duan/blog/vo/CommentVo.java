@@ -13,7 +13,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class CommentVo extends ReplyVo{
-    private List<CommentVo> children;
+    private List<ReplyVo> children;
 
     private Long childrenCount;
 }

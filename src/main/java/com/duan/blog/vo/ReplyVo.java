@@ -21,4 +21,5 @@ public class ReplyVo {
 
     private UserDTO toUser;
 
+    private Integer level;
 }
