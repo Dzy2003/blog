@@ -50,4 +50,13 @@ public class CommentsController {
         return commentsService.getChildComments(id, page, size);
     }
 
+    /**
+     * 用户点赞评论
+     * @param id 评论id
+     * @return 成功或者失败
+     */
+    @PutMapping("/likes/{id}")
+    public Result likeComment(@PathVariable("id") Long id){
+        return commentsService.likeComment(id);
+    }
 }

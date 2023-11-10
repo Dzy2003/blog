@@ -12,7 +12,7 @@ spring:
   data:
     redis:
       database: 1
-      host: 192.168.12.128
+      host: 192.168.12.130
       port: 6379
       password: asdqwe123
       lettuce:

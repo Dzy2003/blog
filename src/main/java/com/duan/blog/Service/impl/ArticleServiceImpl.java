@@ -112,7 +112,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public Result likeArticle(Long id) {
 
         if(isBlogLiked(id)){
-            cancel(id);
+            cancelLike(id);
         }else{
             like(id);
         }
@@ -229,7 +229,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 取消点赞
      * @param id 文章ID
      */
-    private void cancel(Long id) {
+    private void cancelLike(Long id) {
         if(lambdaUpdate().setSql("liked = liked - 1").eq(Article::getId, id).update()){
             stringRedisTemplate.opsForZSet().remove(BLOG_LIKED_KEY + id,
                     UserHolder.getUser().getId().toString());
@@ -402,7 +402,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     /**
      * 获取用户当前用户是否点赞过该博客
      * @param articleId 文章id
-     * @return 未点赞true，点赞false
+     * @return 点赞true，未点赞false
      */
     private Boolean isBlogLiked(Long articleId) {
         Double score = stringRedisTemplate.opsForZSet().score(

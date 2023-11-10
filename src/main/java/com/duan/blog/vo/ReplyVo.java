@@ -22,4 +22,6 @@ public class ReplyVo {
     private UserDTO toUser;
 
     private Integer level;
+
+    private Boolean isLike;
 }

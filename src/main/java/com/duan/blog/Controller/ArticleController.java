@@ -121,7 +121,7 @@ public class ArticleController {
      * @param authorId 作者id
      * @return 文章作者与登录用户相同则删除,否则失败
      */
-    @DeleteMapping("/articleId/{authorId}")
+    @DeleteMapping("/{articleId}/{authorId}")
     public Result deleteArticleByAuthorId(@PathVariable("articleId") Long articleId,@PathVariable Long authorId){
         return articleService.deleteArticleByAuthorId(articleId,authorId);
     }

@@ -28,4 +28,11 @@ public interface ICommentsService extends IService<Comment> {
      * @return 评论下的回复
      */
     Result getChildComments(Long id, Integer page, Integer size);
+
+    /**
+     * 当前登录用户给评论点赞
+     * @param id 评论id
+     * @return 成功和失败
+     */
+    Result likeComment(Long id);
 }
