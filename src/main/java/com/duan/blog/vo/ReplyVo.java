@@ -24,4 +24,6 @@ public class ReplyVo {
     private Integer level;
 
     private Boolean isLike;
+
+    private Long likes;
 }

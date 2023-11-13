@@ -29,4 +29,6 @@ public class Comment {
     private Long toUid;
 
     private Integer level;
+
+    private Integer liked;
 }

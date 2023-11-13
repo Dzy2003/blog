@@ -23,9 +23,10 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.duan.blog.utils.RedisConstants.BLOG_LIKED_KEY;
-import static com.duan.blog.utils.RedisConstants.COMMENT_LIKED_KEY;
+import static com.duan.blog.utils.RedisConstants.*;
 
 /**
  * @author 白日
@@ -64,7 +65,9 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         Comment comment = getCommentByCommentInfo(commentInfo);
         updateArticleCommentCount(comment.getArticleId());
         save(comment);
-
+        if(commentInfo.getParent() != null && commentInfo.getParent() != 0){
+            addReplyToParentZSet(comment.getId(),commentInfo.getParent());
+        }
         return Result.success(null);
     }
 
@@ -77,12 +80,21 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
 
     @Override
     public Result likeComment(Long id) {
-        if(isBlogLiked(id)){
+        if(isCommentLiked(id)){
             cancelLike(id);
         }else{
             like(id);
         }
         return Result.success(null);
+    }
+
+    /**
+     * 将回复添加到父评论的ZSet底下
+     * @param id 回复id
+     * @param parent 父评论ID
+     */
+    private void addReplyToParentZSet(Long id, Long parent) {
+        stringRedisTemplate.opsForZSet().add(COMMENT_REPLY_KEY + parent, id.toString(), 0);
     }
 
     /**
@@ -92,6 +104,10 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
     private void like(Long id) {
         lambdaUpdate().setSql("liked = liked + 1").eq(Comment::getId, id).update();
         stringRedisTemplate.opsForSet().add(COMMENT_LIKED_KEY + id,UserHolder.getUser().getId().toString());
+        Long parentId = lambdaQuery().select(Comment::getParentId).eq(Comment::getId, id).one().getParentId();
+        if(parentId != null && parentId != 0){
+            stringRedisTemplate.opsForZSet().incrementScore(COMMENT_REPLY_KEY + parentId, String.valueOf(id),1);
+        }
     }
 
     /**
@@ -101,6 +117,10 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
     private void cancelLike(Long id) {
         lambdaUpdate().setSql("liked = liked - 1").eq(Comment::getId, id).update();
         stringRedisTemplate.opsForSet().remove(COMMENT_LIKED_KEY + id,UserHolder.getUser().getId().toString());
+        Long parentId = lambdaQuery().select(Comment::getParentId).eq(Comment::getId, id).one().getParentId();
+        if(parentId != null && parentId != 0){
+            stringRedisTemplate.opsForZSet().incrementScore(COMMENT_REPLY_KEY + parentId, id.toString(),-1);
+        }
     }
 
     /**
@@ -108,12 +128,19 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      * @param commentsID 评论ID
      * @return 点赞true，未点赞false
      */
-    private Boolean isBlogLiked(Long commentsID) {
+    private Boolean isCommentLiked(Long commentsID) {
          return stringRedisTemplate.opsForSet().isMember(
                  COMMENT_LIKED_KEY + commentsID,
                  UserHolder.getUser().getId().toString());
     }
 
+    /**
+     * 获取回复
+     * @param id 父评论ID
+     * @param page 页码
+     * @param size  每页数量
+     * @return 回复列表
+     */
     private List<Comment> getReplyByCommentId(Long id, Integer page, Integer size) {
         return lambdaQuery()
                 .select(Comment::getId,Comment::getAuthorId,Comment::getCreateDate,Comment::getToUid,Comment::getContent)
@@ -122,6 +149,11 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
                 .getRecords();
     }
 
+    /**
+     * 将回复列表转换为回复Vo列表
+     * @param reply 回复列表
+     * @return 回复Vo列表
+     */
     private List<ReplyVo> replyList2ReplyVoList(List<Comment> reply) {
         return reply.stream()
                 .map(this::CommentToCommentVo)
@@ -145,9 +177,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      * @return 子评论数量
      */
     private Long getChildrenCount(Long parentId) {
-        return lambdaQuery()
-                .eq(Comment::getParentId, parentId)
-                .count();
+        return stringRedisTemplate.opsForZSet().size(COMMENT_REPLY_KEY + parentId);
     }
 
     /**
@@ -157,10 +187,12 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      * @return 父评论下的子评论集合
      */
     private List<ReplyVo> getChildren(Long parentId) {
+        Set<String> top3Reply = stringRedisTemplate.opsForZSet().reverseRange(
+                COMMENT_REPLY_KEY + parentId, 0, 2);
+        if(top3Reply == null || top3Reply.isEmpty()) return Collections.emptyList();
         return lambdaQuery()
-                .eq(Comment::getParentId, parentId)
-                .orderByAsc(Comment::getCreateDate)
-                .last("limit 3")
+                .in(Comment::getId, top3Reply.stream().map(Long::valueOf).collect(Collectors.toList()))
+                .last("ORDER BY FIELD(id," + String.join(",", top3Reply) + ")")
                 .list()
                 .stream()
                 .map(this::CommentToCommentVo)
@@ -192,6 +224,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         comment.setArticleId(commentInfo.getArticleId());
         comment.setParentId(commentInfo.getParent());
         comment.setLevel(commentInfo.getParent() == 0 ? 1 : 2);
+        comment.setLiked(0);
         return comment;
     }
 
@@ -208,14 +241,27 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         setCommentVoToUser(commentVo, comment.getToUid());
         formatCommentVoCreateDate(commentVo,comment.getCreateDate());
         setCommentVoIsLiked(commentVo);
+        setCommentVoLikes(commentVo);
         return commentVo;
     }
 
+    /**
+     ** 设置VO对象的点赞数likes
+     * @param commentVo VO对象
+     */
+    private void setCommentVoLikes(CommentVo commentVo) {
+        commentVo.setLikes(stringRedisTemplate.opsForSet().size(COMMENT_LIKED_KEY + commentVo.getId().toString()));
+    }
+
+    /**
+     * 设置VO对象是否被当前对象点赞
+     * @param commentVo VO对象
+     */
     private void setCommentVoIsLiked(CommentVo commentVo) {
         if(BeanUtil.isEmpty(UserHolder.getUser())){
             return;
         }
-        commentVo.setIsLike(isBlogLiked(commentVo.getId()));
+        commentVo.setIsLike(isCommentLiked(commentVo.getId()));
     }
 
     /**
