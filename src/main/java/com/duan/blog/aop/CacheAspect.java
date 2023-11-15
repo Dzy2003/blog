@@ -54,7 +54,7 @@ public class CacheAspect {
         if(BeanUtil.isEmpty(Result)) stringRedisTemplate.opsForValue().set(cacheKey, "");
         SimpleRedisLock lock = new SimpleRedisLock(stringRedisTemplate, annotation.cacheName());
         try {
-            if(!lock.tryLock(10l)){
+            if(!lock.tryLock(10L)){
                 log.info("我没拿到锁，我需要等。。。" + Thread.currentThread().getId());
                 Thread.sleep(500);
                 return around(joinPoint);

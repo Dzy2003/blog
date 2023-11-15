@@ -63,13 +63,15 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
     @Transactional
     public Result insertComment(CommentInfo commentInfo) {
         Comment comment = getCommentByCommentInfo(commentInfo);
-        updateArticleCommentCount(comment.getArticleId());
         save(comment);
-        if(commentInfo.getParent() != null && commentInfo.getParent() != 0){
+        if(isReply(commentInfo.getParent())){
             addReplyToParentZSet(comment.getId(),commentInfo.getParent());
+        }else{
+            updateArticleCommentCount(comment.getArticleId());
         }
         return Result.success(null);
     }
+
 
     @Override
     public Result getChildComments(Long id, Integer page, Integer size) {
@@ -88,6 +90,17 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         return Result.success(null);
     }
 
+
+    /**
+     * 判断是评论还是回复
+     * @param Parent 父评论ID
+     * @return true是回复，false是评论
+     */
+    private static boolean isReply(Long Parent) {
+        return Parent != null && Parent != 0;
+    }
+
+
     /**
      * 将回复添加到父评论的ZSet底下
      * @param id 回复id
@@ -105,7 +118,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         lambdaUpdate().setSql("liked = liked + 1").eq(Comment::getId, id).update();
         stringRedisTemplate.opsForSet().add(COMMENT_LIKED_KEY + id,UserHolder.getUser().getId().toString());
         Long parentId = lambdaQuery().select(Comment::getParentId).eq(Comment::getId, id).one().getParentId();
-        if(parentId != null && parentId != 0){
+        if(isReply(parentId)){
             stringRedisTemplate.opsForZSet().incrementScore(COMMENT_REPLY_KEY + parentId, String.valueOf(id),1);
         }
     }
@@ -118,7 +131,7 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         lambdaUpdate().setSql("liked = liked - 1").eq(Comment::getId, id).update();
         stringRedisTemplate.opsForSet().remove(COMMENT_LIKED_KEY + id,UserHolder.getUser().getId().toString());
         Long parentId = lambdaQuery().select(Comment::getParentId).eq(Comment::getId, id).one().getParentId();
-        if(parentId != null && parentId != 0){
+        if(isReply(parentId)){
             stringRedisTemplate.opsForZSet().incrementScore(COMMENT_REPLY_KEY + parentId, id.toString(),-1);
         }
     }
