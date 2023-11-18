@@ -3,6 +3,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.duan.blog.Mapper.ArticleMapper;
 import com.duan.blog.Mapper.SysUserMapper;
 import com.duan.blog.Service.IArticleService;
 import com.duan.blog.Service.ISysUserService;
@@ -34,9 +35,8 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
  public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService{
     @Resource
     FollowMapper followMapper;
-    @Lazy
     @Resource
-    IArticleService articleService;
+    ArticleMapper articleMapper;
     @Resource
     StringRedisTemplate stringRedisTemplate;
     @Override
@@ -171,11 +171,12 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
      * @return 点赞数量
      */
     private Long getLikeCount(Long id) {
-        List<Long> articleIdList = articleService
-                .lambdaQuery()
-                .select(Article::getId)
-                .eq(Article::getAuthorId, id)
-                .list()
+        LambdaQueryWrapper<Article> lqw = new LambdaQueryWrapper<>();
+        List<Long> articleIdList = articleMapper
+                .selectList(
+                        lqw
+                        .select(Article::getId)
+                        .eq(Article::getAuthorId, id))
                 .stream()
                 .map(Article::getId)
                 .toList();
