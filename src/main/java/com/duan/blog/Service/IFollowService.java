@@ -30,4 +30,11 @@ public interface IFollowService extends IService<Follow> {
      * @return 关注结果
      */
     Result followCommons(Long uid);
+
+    /**
+     * 获取粉丝列表
+     * @return 粉丝列表
+     * 用户ID
+     */
+    Result listFans();
 }

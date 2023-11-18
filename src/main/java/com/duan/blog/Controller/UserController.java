@@ -83,16 +83,5 @@ public class UserController {
     public Result editInfo(@RequestBody EditInfo editInfo ){
         return userService.updateUserInfo(editInfo);
     }
-    /**
-     * 获取粉丝列表
-     *
-     * @return 返回粉丝列表结果对象
-     */
-    @GetMapping("/fans")
-    public Result fans(){
-        return userService.listFans();
-    }
-
-
 
 }

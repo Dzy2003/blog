@@ -23,7 +23,7 @@ public interface ITagService extends IService<Tag> {
      * 获取所有标签
      * @return 标签列表
      */
-    Result   getAllTags();
+    Result getAllTags();
     /**
      * 获取标签详情
      * @return 标签详情

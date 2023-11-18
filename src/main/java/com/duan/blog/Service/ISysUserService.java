@@ -53,10 +53,4 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 修改结果
      */
     Result UpdatePassword(ChangeInfo changeInfo);
-
-    /**
-     * 获取粉丝列表
-     * @return 粉丝列表
-     */
-    Result listFans();
 }

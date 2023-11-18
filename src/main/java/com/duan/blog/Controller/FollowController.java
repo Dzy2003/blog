@@ -47,5 +47,12 @@ public class FollowController {
         return service.followCommons(uid);
     }
 
-
+    /**
+     * 获取粉丝列表
+     * @return 返回粉丝列表结果对象
+     */
+    @GetMapping("/fans")
+    public Result fans(){
+        return service.listFans();
+    }
 }

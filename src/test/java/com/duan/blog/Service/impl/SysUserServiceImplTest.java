@@ -70,8 +70,4 @@ class SysUserServiceImplTest {
                 .build()));
     }
 
-    @Test
-    void listFans() {
-        System.out.println(userService.listFans());
-    }
 }

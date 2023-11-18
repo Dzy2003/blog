@@ -32,8 +32,7 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/follows/**",
                         "/articles/of/follow",
                         "/users/change_password",
-                        "/users/info",
-                        "/users/fans"
+                        "/users/info"
                 );
     }
 }

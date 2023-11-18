@@ -98,6 +98,19 @@ public class IFollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implem
                 .collect(Collectors.toList()));
     }
 
+    @Override
+    public Result listFans() {
+        return Result.success(
+                lambdaQuery()
+                        .select(Follow::getUserId)
+                        .eq(Follow::getFollowUserId, UserHolder.getUser().getId())
+                        .list()
+                        .stream()
+                        .map(Follow::getUserId)
+                        .map(this::getUserDTOById)
+                        .collect(Collectors.toList())
+        );
+    }
     /**
      * 通过uid获得UserDTO
      * @param id 用户id

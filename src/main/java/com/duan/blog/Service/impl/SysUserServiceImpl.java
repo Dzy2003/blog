@@ -1,11 +1,10 @@
 package com.duan.blog.Service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.SysUserMapper;
 import com.duan.blog.Service.IArticleService;
-import com.duan.blog.Service.IFollowService;
 import com.duan.blog.Service.ISysUserService;
 import com.duan.blog.aop.annotation.LogAnnotation;
 import com.duan.blog.dto.*;
@@ -13,19 +12,17 @@ import com.duan.blog.pojo.Article;
 import com.duan.blog.pojo.Follow;
 import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.JWTUtils;
-import com.duan.blog.utils.UserHolder;
 import com.duan.blog.vo.UserInfoVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.ibatis.reflection.wrapper.BaseWrapper;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import com.duan.blog.mapper.FollowMapper;
 import static com.duan.blog.utils.ErrorCode.*;
 import static com.duan.blog.utils.RedisConstants.BLOG_LIKED_KEY;
 import static com.duan.blog.utils.RedisConstants.FOLLOWED_KEY;
@@ -36,8 +33,7 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
 @Slf4j
  public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService{
     @Resource
-    @Lazy
-    IFollowService followService;
+    FollowMapper followMapper;
     @Lazy
     @Resource
     IArticleService articleService;
@@ -169,20 +165,6 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
 
     }
 
-    @Override
-    public Result listFans() {
-        return Result.success(
-                followService.lambdaQuery()
-                        .select(Follow::getUserId)
-                        .eq(Follow::getFollowUserId, UserHolder.getUser().getId())
-                        .list()
-                        .stream()
-                        .map(Follow::getUserId)
-                        .map(this::getUserDTO)
-                        .collect(Collectors.toList())
-        );
-    }
-
     /**
      * 获取点赞数量
      * @param id 用户id
@@ -211,10 +193,8 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
      * @return 粉丝数量
      */
     private Long getFansCount(Long id) {
-        return followService
-                .lambdaQuery()
-                .eq(Follow::getFollowUserId, id)
-                .count();
+        LambdaQueryWrapper<Follow> lqw = new LambdaQueryWrapper<>();
+        return followMapper.selectCount(lqw.eq(Follow::getFollowUserId,id));
     }
 
     /**
