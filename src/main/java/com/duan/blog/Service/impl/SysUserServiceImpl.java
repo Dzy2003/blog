@@ -1,14 +1,15 @@
 package com.duan.blog.Service.impl;
-
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.duan.blog.Mapper.SysUserMapper;
+import com.duan.blog.Service.IArticleService;
 import com.duan.blog.Service.IFollowService;
 import com.duan.blog.Service.ISysUserService;
 import com.duan.blog.aop.annotation.LogAnnotation;
 import com.duan.blog.dto.*;
+import com.duan.blog.pojo.Article;
 import com.duan.blog.pojo.Follow;
 import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.JWTUtils;
@@ -17,15 +18,17 @@ import com.duan.blog.vo.UserInfoVo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.ibatis.reflection.wrapper.BaseWrapper;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import static com.duan.blog.utils.ErrorCode.*;
+import static com.duan.blog.utils.RedisConstants.BLOG_LIKED_KEY;
+import static com.duan.blog.utils.RedisConstants.FOLLOWED_KEY;
 import static com.duan.blog.utils.SystemConstants.SLAT;
 //TODO:在登录相关功能中加入redis
 
@@ -35,7 +38,11 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
     @Resource
     @Lazy
     IFollowService followService;
-
+    @Lazy
+    @Resource
+    IArticleService articleService;
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
     @Override
     public Result login(LoginInfo loginInfo) {
         if(loginInfo == null || StrUtil.isBlank(loginInfo.getAccount()) || StrUtil.isBlank(loginInfo.getPassword())){
@@ -71,6 +78,7 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
         if(token == null) return Result.fail(NO_LOGIN.getCode(),NO_LOGIN.getMsg());
 
         Map<String, Object> checkMsg = JWTUtils.checkToken(token);
+        assert checkMsg != null;
         return Result.success(getUserDTO(Long.valueOf(checkMsg.get("userId").toString())));
     }
 
@@ -116,15 +124,14 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
     @Override
     @LogAnnotation(module = "userService", operator = "获取用户详情")
     public Result getUserInfo(Long id) {
-        return Result.success(
-                BeanUtil.copyProperties(
-                lambdaQuery()
-                        .eq(SysUser::getId, id)
-                        .select(SysUser::getId,SysUser::getAccount,SysUser::getAvatar,SysUser::getCreateDate,
-                        SysUser::getNickname,SysUser::getLastLogin,SysUser::getEmail,SysUser::getMobilePhoneNumber)
-                        .one()
-        ,UserInfoVo.class));
+        UserInfoVo userInfoVo = getBasicInfo(id);
+        if(userInfoVo == null) return Result.fail(USER_NOT_EXIST.getCode(),USER_NOT_EXIST.getMsg());
+        userInfoVo.setFollowCount(getFollowCount(id));
+        userInfoVo.setFansCount(getFansCount(id));
+        userInfoVo.setLikeCount(getLikeCount(id));
+        return Result.success(userInfoVo);
     }
+
 
     @Override
     public Result updateUserInfo(EditInfo editInfo) {
@@ -176,6 +183,64 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
         );
     }
 
+    /**
+     * 获取点赞数量
+     * @param id 用户id
+     * @return 点赞数量
+     */
+    private Long getLikeCount(Long id) {
+        List<Long> articleIdList = articleService
+                .lambdaQuery()
+                .select(Article::getId)
+                .eq(Article::getAuthorId, id)
+                .list()
+                .stream()
+                .map(Article::getId)
+                .toList();
+        Long likeCount = 0L;
+        for (Long articleId : articleIdList) {
+            likeCount += stringRedisTemplate.opsForZSet()
+                    .count(BLOG_LIKED_KEY + articleId,0,System.currentTimeMillis());
+        }
+        return likeCount;
+    }
+
+    /**
+     * 获取粉丝数量
+     * @param id 用户id
+     * @return 粉丝数量
+     */
+    private Long getFansCount(Long id) {
+        return followService
+                .lambdaQuery()
+                .eq(Follow::getFollowUserId, id)
+                .count();
+    }
+
+    /**
+     * 获取关注数量
+     * @param id 用户id
+     * @return 关注数量
+     */
+    private Long getFollowCount(Long id) {
+        return stringRedisTemplate.opsForSet().size(FOLLOWED_KEY + id);
+    }
+
+    /**
+     * 从数据库获取用户基础信息
+     * @param id 用户id
+     * @return 基础信息
+     */
+    private UserInfoVo getBasicInfo(Long id) {
+        SysUser sysUser = lambdaQuery()
+                .eq(SysUser::getId, id)
+                .select(SysUser::getId, SysUser::getAccount, SysUser::getAvatar, SysUser::getCreateDate,
+                        SysUser::getNickname, SysUser::getLastLogin, SysUser::getEmail, SysUser::getMobilePhoneNumber)
+                .one();
+        if(BeanUtil.isEmpty(sysUser)) return null;
+        return BeanUtil.copyProperties(sysUser, UserInfoVo.class);
+
+    }
 
     private Long insertRegisterUser(RegisterInfo registerInfo) {
         SysUser newUser = new SysUser();

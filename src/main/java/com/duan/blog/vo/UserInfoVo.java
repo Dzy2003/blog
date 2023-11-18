@@ -22,4 +22,7 @@ public class UserInfoVo {
     private Long lastLogin;
     private String mobilePhoneNumber;
     private String nickname;
+    private Long likeCount;
+    private Long fansCount;
+    private Long followCount;
 }

@@ -15,7 +15,10 @@ import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.duan.blog.utils.RedisConstants.FOLLOWED_KEY;
 
 /**
 * @author soga
@@ -35,10 +38,9 @@ public class IFollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implem
     }
 
     private Boolean getIsFollow(Long otherUserID) {
-        Boolean isFollow = stringRedisTemplate.opsForSet().isMember(
-                RedisConstants.FOLLOWED_KEY + UserHolder.getUser().getId().toString(),
+        return stringRedisTemplate.opsForSet().isMember(
+                FOLLOWED_KEY + UserHolder.getUser().getId().toString(),
                 otherUserID.toString());
-        return isFollow;
     }
 
     @Override
@@ -61,7 +63,7 @@ public class IFollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implem
                 .remove();
         if(success) {
             stringRedisTemplate.opsForSet().remove(
-                    RedisConstants.FOLLOWED_KEY + UserHolder.getUser().getId().toString(),
+                    FOLLOWED_KEY + UserHolder.getUser().getId().toString(),
                     followUserId);
         }
     }
@@ -72,7 +74,7 @@ public class IFollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implem
      */
     private void Follow(Long followUserId) {
         savaFollow(followUserId);
-        stringRedisTemplate.opsForSet().add(RedisConstants.FOLLOWED_KEY + UserHolder.getUser().getId()
+        stringRedisTemplate.opsForSet().add(FOLLOWED_KEY + UserHolder.getUser().getId()
                 , followUserId.toString());
     }
 
@@ -87,9 +89,10 @@ public class IFollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implem
     @Override
     public Result followCommons(Long uid) {
         return Result.success(
-                stringRedisTemplate.opsForSet().intersect(
-                RedisConstants.FOLLOWED_KEY + UserHolder.getUser().getId(),
-                RedisConstants.FOLLOWED_KEY + uid).stream()
+                Objects.requireNonNull(stringRedisTemplate.opsForSet().intersect(
+                                FOLLOWED_KEY + UserHolder.getUser().getId(),
+                                FOLLOWED_KEY + uid))
+                        .stream()
                 .map(Long::valueOf)
                 .map(this::getUserDTOById)
                 .collect(Collectors.toList()));
@@ -98,7 +101,7 @@ public class IFollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implem
     /**
      * 通过uid获得UserDTO
      * @param id 用户id
-     * @return
+     * @return UserDTO
      */
     private UserDTO getUserDTOById(Long id){
         return BeanUtil.copyProperties(userService.lambdaQuery()
