@@ -11,6 +11,7 @@ public enum  ErrorCode {
     ARTICLE_NOT_EXIST(20001,"该文章不存在或已被删除"),
     NOT_AUTHOR(20002,"该文章不属于你"),
     DATA_ERROR(30001, "获取数据失败"),
+    REPETITIVE_OPERATION(30002, "请勿重复操作"),
     NO_PERMISSION(70001,"无访问权限"),
     SESSION_TIME_OUT(90001,"会话超时");
 

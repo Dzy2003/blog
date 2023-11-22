@@ -80,4 +80,11 @@ public interface IArticleService extends IService<Article> {
      * @return 成功或者失败
      */
     Result deleteArticleByAuthorId(Long articleId, Long authorId);
+
+    /**
+     * 置顶文章
+     * @param id 文章id
+     * @return null
+     */
+    Result topArticle(Long id);
 }

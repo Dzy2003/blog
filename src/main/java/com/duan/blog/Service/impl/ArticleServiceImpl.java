@@ -24,7 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import static com.duan.blog.utils.ErrorCode.ARTICLE_NOT_EXIST;
+
+import static com.duan.blog.utils.ErrorCode.*;
 import static com.duan.blog.utils.RedisConstants.BLOG_LIKED_KEY;
 import static com.duan.blog.utils.RedisConstants.FEED_KEY;
 import static com.duan.blog.utils.SystemConstants.*;
@@ -167,6 +168,44 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return Result.success(null);
         }
         return Result.fail(ErrorCode.NOT_AUTHOR.getCode(),ErrorCode.NOT_AUTHOR.getMsg());
+    }
+
+    @Override
+    @Transactional
+    public Result topArticle(Long id) {
+        Article topArticle = lambdaQuery()
+                .select(Article::getAuthorId,Article::getType)
+                .eq(Article::getId, id)
+                .one();
+        if(topArticle == null) return Result.fail(ARTICLE_NOT_EXIST.getCode(),ARTICLE_NOT_EXIST.getMsg());
+        if(topArticle.getType() == 1) return Result.fail(REPETITIVE_OPERATION.getCode(),REPETITIVE_OPERATION.getMsg());
+        if(!topArticle.getAuthorId().equals(UserHolder.getUserID())) return Result.fail(NOT_AUTHOR.getCode(), NOT_AUTHOR.getMsg());
+        cancelBeforeTop();
+        setTop(id);
+        return Result.success(null);
+
+    }
+
+    /**
+     * 根据文章id设置置顶
+     * @param id 文章id
+     */
+    private void setTop(Long id) {
+        lambdaUpdate()
+                .set(Article::getType, 1)
+                .eq(Article::getId, id)
+                .update();
+    }
+
+    /**
+     * 撤销之前的置顶文章
+     */
+    private void cancelBeforeTop() {
+        lambdaUpdate()
+                .set(Article::getType, 0)
+                .eq(Article::getAuthorId, UserHolder.getUserID())
+                .eq(Article::getType, 1)
+                .update();
     }
 
     /**

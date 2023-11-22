@@ -29,7 +29,7 @@ public class TagController {
         return tagService.getAllTags();
     }
     /**
-     * 获取标签详情
+     * 获取全部标签详情
      * @return 标签详情
      */
     @GetMapping("/detail")

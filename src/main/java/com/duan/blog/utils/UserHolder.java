@@ -21,4 +21,8 @@ public class UserHolder {
     public static void removeUser(){
         tl.remove();
     }
+
+    public static Long getUserID(){
+        return tl.get().getId();
+    }
 }

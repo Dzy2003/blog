@@ -125,4 +125,14 @@ public class ArticleController {
     public Result deleteArticleByAuthorId(@PathVariable("articleId") Long articleId,@PathVariable Long authorId){
         return articleService.deleteArticleByAuthorId(articleId,authorId);
     }
+
+    /**
+     * 设置文章置顶
+     * @param id 文章ID
+     * @return null
+     */
+    @PutMapping("/top/{id}")
+    public Result topArticle(@PathVariable("id") Long id){
+        return articleService.topArticle(id);
+    }
 }

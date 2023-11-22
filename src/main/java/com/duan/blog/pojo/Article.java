@@ -49,4 +49,9 @@ public class Article {
      * 点赞数量
      */
     private Integer liked;
+
+    /**
+     * 类型：0-普通文章，1-置顶文章
+     */
+    private Integer type;
 }
