@@ -1,5 +1,8 @@
 package com.duan.blog.utils;
 
+import lombok.Getter;
+
+@Getter
 public enum  ErrorCode {
 
     PARAMS_ERROR(10001,"参数有误"),
@@ -16,27 +19,11 @@ public enum  ErrorCode {
     SESSION_TIME_OUT(90001,"会话超时");
 
 
-    private int code;
-    private String msg;
+    private final int code;
+    private final String msg;
 
     ErrorCode(int code, String msg){
         this.code = code;
-        this.msg = msg;
-    }
-
-    public int getCode() {
-        return code;
-    }
-
-    public void setCode(int code) {
-        this.code = code;
-    }
-
-    public String getMsg() {
-        return msg;
-    }
-
-    public void setMsg(String msg) {
         this.msg = msg;
     }
 }

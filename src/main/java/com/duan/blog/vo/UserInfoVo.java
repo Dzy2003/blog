@@ -25,4 +25,5 @@ public class UserInfoVo {
     private Long likeCount;
     private Long fansCount;
     private Long followCount;
+    private Long articleCount;
 }

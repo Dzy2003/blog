@@ -53,4 +53,6 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 修改结果
      */
     Result UpdatePassword(ChangeInfo changeInfo);
+
+    Result listUserArticle(Long uid);
 }

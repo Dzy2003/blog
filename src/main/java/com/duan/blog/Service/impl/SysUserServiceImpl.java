@@ -125,6 +125,7 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
         userInfoVo.setFollowCount(getFollowCount(id));
         userInfoVo.setFansCount(getFansCount(id));
         userInfoVo.setLikeCount(getLikeCount(id));
+        userInfoVo.setArticleCount(getArticleCount(id));
         return Result.success(userInfoVo);
     }
 
@@ -165,6 +166,11 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
 
     }
 
+    @Override
+    public Result listUserArticle(Long uid) {
+        return null;
+    }
+
     /**
      * 获取点赞数量
      * @param id 用户id
@@ -186,6 +192,18 @@ import static com.duan.blog.utils.SystemConstants.SLAT;
                     .count(BLOG_LIKED_KEY + articleId,0,System.currentTimeMillis());
         }
         return likeCount;
+    }
+
+    /**
+     * 获取用户文章数量
+     * @param id 用户id
+     * @return 文章数量
+     */
+    private Long getArticleCount(Long id) {
+        LambdaQueryWrapper<Article> lqw = new LambdaQueryWrapper<>();
+        return articleMapper.selectCount(lqw
+                .eq(Article::getAuthorId, id)
+                );
     }
 
     /**
