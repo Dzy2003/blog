@@ -27,6 +27,8 @@ public class MvcConfig implements WebMvcConfigurer {
                         "/test",
                         "/comments/create/change",
                         "/comments/likes/*",
+                        "/comments/my",
+                        "/comments/other",
                         "/articles/publish",
                         "/articles/likes/**",
                         "/articles/top/**",

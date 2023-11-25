@@ -35,4 +35,20 @@ public interface ICommentsService extends IService<Comment> {
      * @return 成功和失败
      */
     Result likeComment(Long id);
+
+    /**
+     * 显示当前用户所有文章的评论
+     * @param page 当前页
+     * @param size 每页数量
+     * @return 当前用户所有文章的评论
+     */
+    Result listCommentsToCurUser(Integer page, Integer size);
+
+    /**
+     * 显示当前用户的评论
+     * @param page 当前页
+     * @param size 每页数量
+     * @return 当前用户评论别人的文章
+     */
+    Result listUserComments(Integer page, Integer size);
 }

@@ -13,6 +13,7 @@ import com.duan.blog.pojo.Article;
 import com.duan.blog.pojo.Comment;
 import com.duan.blog.pojo.SysUser;
 import com.duan.blog.utils.UserHolder;
+import com.duan.blog.vo.CommentManageVo;
 import com.duan.blog.vo.CommentVo;
 import com.duan.blog.vo.ReplyVo;
 import jakarta.annotation.Resource;
@@ -20,10 +21,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.duan.blog.utils.RedisConstants.*;
@@ -90,6 +88,59 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         return Result.success(null);
     }
 
+    @Override
+    public Result listCommentsToCurUser(Integer page, Integer size) {
+        List<Article> curUserArticle = getCurUserArticle();
+        //文章id到标题的映射
+        Map<Long, String> idToTitle = curUserArticle.stream().collect(
+                Collectors.toMap(Article::getId, Article::getTitle));
+        List<Comment> comments = getUserComments(curUserArticle.stream().map(Article::getId).toList());
+        return Result.success(comments.stream()
+                .map(comment -> CommentManageVo
+                        .builder()
+                        .commentId(comment.getId())
+                        .CommentUser(getUserDTOByID(comment.getAuthorId()))
+                        .articleTitle(idToTitle.get(comment.getArticleId()))
+                        .content(comment.getContent())
+                        .createTime(formatTimeStamp(comment.getCreateDate()))
+                        .build())
+                .toList());
+
+    }
+
+
+
+    @Override
+    public Result listUserComments(Integer page, Integer size) {
+        //TODO 获取当前用户的评论实现
+        return null;
+    }
+
+
+    /**
+     * 当前当前登录用户的全部文章id和标题
+     * @return 文章id和标题
+     */
+    private List<Article> getCurUserArticle() {
+        return articleService.lambdaQuery()
+                .select(Article::getId, Article::getTitle)
+                .eq(Article::getAuthorId, UserHolder.getUserID())
+                .list();
+    }
+
+    /**
+     * 找到当前用户的全部评论
+     * @param userArticleIds 当前用户的文章
+     * @return 评论列表
+     */
+    private List<Comment> getUserComments(List<Long> userArticleIds) {
+        return lambdaQuery()
+                .select(Comment::getId, Comment::getArticleId,
+                        Comment::getAuthorId, Comment::getCreateDate, Comment::getContent)
+                .eq(Comment::getLevel, 1)
+                .in(Comment::getArticleId, userArticleIds)
+                .list();
+    }
 
     /**
      * 判断是评论还是回复
@@ -249,10 +300,9 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      */
     private CommentVo CommentToCommentVo(Comment comment) {
         CommentVo commentVo = BeanUtil.copyProperties(comment, CommentVo.class);
-
-        setCommentVoAuthor(commentVo, comment.getAuthorId());
-        setCommentVoToUser(commentVo, comment.getToUid());
-        formatCommentVoCreateDate(commentVo,comment.getCreateDate());
+        commentVo.setAuthor(getUserDTOByID(comment.getAuthorId()));
+        commentVo.setToUser(getUserDTOByID(comment.getToUid()));
+        commentVo.setCreateDate(formatTimeStamp(comment.getCreateDate()));
         setCommentVoIsLiked(commentVo);
         setCommentVoLikes(commentVo);
         return commentVo;
@@ -277,37 +327,24 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         commentVo.setIsLike(isCommentLiked(commentVo.getId()));
     }
 
-    /**
-     * 设置CommentVo的ToUser属性
-     * @param commentVo 评论VO
-     * @param toUid 回复用户
-     */
-    private void setCommentVoToUser(CommentVo commentVo, Long toUid) {
-        commentVo.setToUser(BeanUtil.copyProperties(userService.lambdaQuery()
-                .select(SysUser::getId, SysUser::getAvatar, SysUser::getNickname)
-                .eq(SysUser::getId, toUid)
-                .one(), UserDTO.class));
-    }
 
     /**
-     * 设置CommentVo的Author属性
-     * @param commentVo 评论VO
-     * @param authorId 评论用户ID
+     * 通过用户ID获取粗略信息
+     * @param authorId 用户ID
      */
-    private void setCommentVoAuthor(CommentVo commentVo, Long authorId) {
-        commentVo.setAuthor(BeanUtil.copyProperties(userService.lambdaQuery()
+    private UserDTO getUserDTOByID(Long authorId) {
+        return BeanUtil.copyProperties(userService.lambdaQuery()
                 .select(SysUser::getId, SysUser::getAvatar, SysUser::getNickname)
                 .eq(SysUser::getId, authorId)
-                .one(), UserDTO.class));
+                .one(), UserDTO.class);
     }
 
     /**
-     * 将article中CreateDate的时间戳转换为时间并添加到ArticleVo
-     * @param commentVo commentVo
+     * 获取时间戳
+     * @param Timestamp 时间戳
      */
-    private void formatCommentVoCreateDate(CommentVo commentVo,Long Timestamp) {
-        String CreateTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    private String formatTimeStamp(Long Timestamp) {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
                 .format(new Date(Timestamp));
-        commentVo.setCreateDate(CreateTime);
     }
 }
