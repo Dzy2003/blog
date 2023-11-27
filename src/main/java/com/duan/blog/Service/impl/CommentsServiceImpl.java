@@ -44,7 +44,6 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         List<Comment> parents = lambdaQuery()
                 .eq(Comment::getArticleId, id)
                 .eq(Comment::getLevel, 1)
-                .orderByAsc(Comment::getCreateDate)
                 .page(new Page<>(page, size))
                 .getRecords();
 
@@ -94,8 +93,68 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
         //文章id到标题的映射
         Map<Long, String> idToTitle = curUserArticle.stream().collect(
                 Collectors.toMap(Article::getId, Article::getTitle));
-        List<Comment> comments = getUserComments(curUserArticle.stream().map(Article::getId).toList());
-        return Result.success(comments.stream()
+        List<Comment> comments = getUserCommentsByArticleIds(curUserArticle.stream().map(Article::getId).toList(),page,size);
+        List<CommentManageVo> commentManageVos = getCommentManageVos(comments, idToTitle);
+        return Result.success(commentManageVos);
+    }
+
+
+    @Override
+    public Result listUserComments(Integer page, Integer size) {
+        //TODO 获取当前用户的评论实现
+        List<Comment> comments = getCommentsByUserID(page, size);
+        return Result.success(getCommentManageVos(comments));
+    }
+
+    /**
+     * 查询当前用户给其它人的评论
+     * @param page 页码
+     * @param size 页大小
+     * @return 评论列表
+     */
+    private List<Comment> getCommentsByUserID(Integer page, Integer size) {
+        return lambdaQuery()
+                .select(Comment::getId, Comment::getArticleId,
+                        Comment::getAuthorId, Comment::getCreateDate, Comment::getContent)
+                .eq(Comment::getAuthorId, UserHolder.getUserID())
+                .page(new Page<>(page, size))
+                .getRecords();
+    }
+    /**
+     * 拿到显示到评论管理页面的评论VO
+     * @param comments 评论列表
+     * @return List<CommentManageVo>
+     */
+    private List<CommentManageVo> getCommentManageVos(List<Comment> comments) {
+        return comments.stream()
+                .map(comment -> CommentManageVo
+                        .builder()
+                        .commentId(comment.getId())
+                        .CommentUser(getUserDTOByID(comment.getAuthorId()))
+                        .articleTitle(getTitleByArticleID(comment.getArticleId()))
+                        .content(comment.getContent())
+                        .createTime(formatTimeStamp(comment.getCreateDate()))
+                        .build())
+                .toList();
+    }
+
+    /**
+     * 通过文章id拿到文章标题
+     * @param articleId 文章id
+     * @return 文章标题
+     */
+    private String getTitleByArticleID(Long articleId) {
+        return articleService.lambdaQuery().select(Article::getTitle).eq(Article::getId, articleId).one().getTitle();
+    }
+
+    /**
+     * 拿到显示到评论管理页面的评论VO
+     * @param comments 评论列表
+     * @param idToTitle 文章id到标题的映射
+     * @return List<CommentManageVo>
+     */
+    private List<CommentManageVo> getCommentManageVos(List<Comment> comments, Map<Long, String> idToTitle) {
+        return comments.stream()
                 .map(comment -> CommentManageVo
                         .builder()
                         .commentId(comment.getId())
@@ -104,19 +163,8 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
                         .content(comment.getContent())
                         .createTime(formatTimeStamp(comment.getCreateDate()))
                         .build())
-                .toList());
-
+                .toList();
     }
-
-
-
-    @Override
-    public Result listUserComments(Integer page, Integer size) {
-        //TODO 获取当前用户的评论实现
-        return null;
-    }
-
-
     /**
      * 当前当前登录用户的全部文章id和标题
      * @return 文章id和标题
@@ -133,13 +181,13 @@ public class CommentsServiceImpl extends ServiceImpl<CommentsMapper, Comment> im
      * @param userArticleIds 当前用户的文章
      * @return 评论列表
      */
-    private List<Comment> getUserComments(List<Long> userArticleIds) {
+    private List<Comment> getUserCommentsByArticleIds(List<Long> userArticleIds,Integer page, Integer size) {
         return lambdaQuery()
                 .select(Comment::getId, Comment::getArticleId,
                         Comment::getAuthorId, Comment::getCreateDate, Comment::getContent)
                 .eq(Comment::getLevel, 1)
                 .in(Comment::getArticleId, userArticleIds)
-                .list();
+                .page(new Page<>(page, size)).getRecords();
     }
 
     /**
